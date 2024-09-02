@@ -1,0 +1,62 @@
+{
+  "name": "reactjs-symfony-ui",
+  "version": "2.0.2",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint 'src/**/*.{ts,tsx}' --max-warnings=0",
+    "lint:fix": "npm run lint -- --fix",
+    "typecheck": "node scripts/typeCheckStaged.js",
+    "postinstall": "husky install",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "src/**/*": [
+      "npm run typecheck",
+      "npm run lint",
+      "npm test"
+    ]
+  },
+  "dependencies": {
+    "@types/event-source-polyfill": "^1.0.5",
+    "axios": "^1.7.7",
+    "bootstrap": "^5.3.3",
+    "event-source-polyfill": "^1.0.31",
+    "nookies": "^2.5.2",
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.4",
+    "react-dom": "^18.3.1",
+    "react-error-boundary": "^4.0.13",
+    "react-hot-toast": "^2.4.1",
+    "react-router-dom": "^6.26.1"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.25.4",
+    "@babel/preset-react": "^7.24.7",
+    "@babel/preset-typescript": "^7.24.7",
+    "@testing-library/jest-dom": "^6.5.0",
+    "@testing-library/react": "^15.0.7",
+    "@types/jest": "^29.5.12",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.35.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "husky": "^9.1.5",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "lint-staged": "^15.2.9",
+    "prettier": "3.3.3",
+    "sass": "1.77.6",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2",
+    "vite-plugin-environment": "^1.1.3"
+  }
+}
