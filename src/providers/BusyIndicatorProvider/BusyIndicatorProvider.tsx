@@ -37,7 +37,7 @@ function BusyIndicatorProvider(props: Props) {
     const findBusyEndpointIndex = (url: string, type: string) =>
       busyEndpoints.findIndex((e) => e.url === url && e.type === type)
 
-    // console.log('Dispatched action :: busy indicator', action)
+    console.log('Dispatched action :: busy indicator', action)
 
     switch (action.type) {
       case 'reset':
