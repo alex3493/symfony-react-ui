@@ -27,12 +27,12 @@ function ApiValidationProvider(props: Props) {
     errorData: ApiValidationError[],
     action: errorsUpdateAction
   ) {
-    console.log(
-      'Error data reducer :: Dispatched action: ' + action.type,
-      action.errors,
-      action.context,
-      action.property
-    )
+    // console.log(
+    //   'Error data reducer :: Dispatched action: ' + action.type,
+    //   action.errors,
+    //   action.context,
+    //   action.property
+    // )
 
     let updatedErrors = [...errorData]
 
