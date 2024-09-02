@@ -1,6 +1,6 @@
 import { Button, Card, Form, Spinner } from 'react-bootstrap'
 import React, { useState } from 'react'
-import { useSession } from '@/hooks'
+import { useBusyIndicator, useSession } from '@/hooks'
 import { api } from '@/services'
 import { PROFILE_UPDATE_API_ROUTE } from '@/utils'
 import ValidatedControl from '@/components/ValidatedControl'
@@ -12,10 +12,9 @@ type ProfileUpdateForm = {
 }
 
 function UpdateProfile() {
-  const [profileUpdateRequestStatus, setProfileUpdateRequestStatus] =
-    useState('success')
-
   const { user, updateUser } = useSession()
+
+  const { isEndpointBusy } = useBusyIndicator()
 
   const [values, setValues] = useState<ProfileUpdateForm>({
     email: user?.email || '',
@@ -30,9 +29,9 @@ function UpdateProfile() {
     })
   }
 
-  async function handleSubmit() {
-    setProfileUpdateRequestStatus('loading')
+  const disableSubmit = isEndpointBusy(PROFILE_UPDATE_API_ROUTE)
 
+  async function handleSubmit() {
     try {
       const { data } = await api.patch(PROFILE_UPDATE_API_ROUTE, values)
       updateUser(data.user)
@@ -40,8 +39,6 @@ function UpdateProfile() {
       /**
        * an error handler can be added here
        */
-    } finally {
-      setProfileUpdateRequestStatus('success')
     }
   }
 
@@ -97,9 +94,9 @@ function UpdateProfile() {
             <Button
               variant="primary"
               onClick={handleSubmit}
-              disabled={profileUpdateRequestStatus === 'loading'}
+              disabled={disableSubmit}
             >
-              {profileUpdateRequestStatus === 'loading' && (
+              {disableSubmit && (
                 <Spinner
                   as="span"
                   animation="border"
