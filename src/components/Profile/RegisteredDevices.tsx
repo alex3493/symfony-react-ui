@@ -1,6 +1,6 @@
-import { Button, Card, Table } from 'react-bootstrap'
-import React, { useState } from 'react'
-import { useSession } from '@/hooks'
+import { Button, Card, Spinner, Table } from 'react-bootstrap'
+import React from 'react'
+import { useBusyIndicator, useSession } from '@/hooks'
 import RegisteredDeviceModel from '@/models/RegisteredDeviceModel'
 import {
   LOGOUT_FROM_ALL_DEVICES_API_ROUTE,
@@ -9,10 +9,9 @@ import {
 import { api } from '@/services'
 
 function RegisteredDevices() {
-  const [registeredDevicesRequestStatus, setRegisteredDevicesRequestStatus] =
-    useState('success')
-
   const { user, updateUser } = useSession()
+
+  const { isEndpointBusy } = useBusyIndicator()
 
   const handleLogout = async (device: RegisteredDeviceModel) => {
     console.log('Logging out from device', device)
@@ -20,31 +19,36 @@ function RegisteredDevices() {
       '{tokenId}',
       device.id.toString()
     )
-    setRegisteredDevicesRequestStatus('loading')
     try {
       const { data } = await api.delete(url)
       console.log('Logout from device response', data)
       updateUser(data.user)
     } catch (error) {
       console.log('Error logging out from device', error)
-    } finally {
-      setRegisteredDevicesRequestStatus('success')
     }
   }
 
   const handleSignOut = async () => {
     console.log('Logging out from all devices')
-    setRegisteredDevicesRequestStatus('loading')
     try {
       const { data } = await api.post(LOGOUT_FROM_ALL_DEVICES_API_ROUTE)
       console.log('Logout from all devices response', data)
       updateUser(data.user)
     } catch (error) {
       console.log('Error logging out from all devices', error)
-    } finally {
-      setRegisteredDevicesRequestStatus('success')
     }
   }
+
+  const disableDeviceLogoutSubmit = (device: RegisteredDeviceModel) => {
+    const url = LOGOUT_FROM_DEVICE_API_ROUTE.replace(
+      '{tokenId}',
+      device.id.toString()
+    )
+
+    return isEndpointBusy(url)
+  }
+
+  const disableSignOutSubmit = isEndpointBusy(LOGOUT_FROM_ALL_DEVICES_API_ROUTE)
 
   return (
     <>
@@ -71,8 +75,17 @@ function RegisteredDevices() {
                       <Button
                         variant="warning"
                         onClick={() => handleLogout(device)}
-                        disabled={registeredDevicesRequestStatus === 'loading'}
+                        disabled={disableDeviceLogoutSubmit(device)}
                       >
+                        {disableDeviceLogoutSubmit(device) && (
+                          <Spinner
+                            as="span"
+                            animation="border"
+                            size="sm"
+                            role="status"
+                            aria-hidden="true"
+                          />
+                        )}{' '}
                         Log out
                       </Button>
                     </td>
@@ -89,8 +102,17 @@ function RegisteredDevices() {
             <Button
               variant="danger"
               onClick={handleSignOut}
-              disabled={registeredDevicesRequestStatus === 'loading'}
+              disabled={disableSignOutSubmit}
             >
+              {disableSignOutSubmit && (
+                <Spinner
+                  as="span"
+                  animation="border"
+                  size="sm"
+                  role="status"
+                  aria-hidden="true"
+                />
+              )}{' '}
               Log out from all devices
             </Button>
           )}
