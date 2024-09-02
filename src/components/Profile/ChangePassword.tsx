@@ -29,9 +29,7 @@ function ChangePassword() {
     })
   }
 
-  const disableSubmit = () => {
-    return isEndpointBusy(CHANGE_PASSWORD_API_ROUTE)
-  }
+  const disableSubmit = isEndpointBusy(CHANGE_PASSWORD_API_ROUTE)
 
   async function handleSubmit() {
     try {
@@ -100,9 +98,9 @@ function ChangePassword() {
             <Button
               variant="primary"
               onClick={handleSubmit}
-              disabled={disableSubmit()}
+              disabled={disableSubmit}
             >
-              {disableSubmit() && (
+              {disableSubmit && (
                 <Spinner
                   as="span"
                   animation="border"
