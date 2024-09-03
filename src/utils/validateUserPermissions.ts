@@ -1,6 +1,5 @@
 import UserModel from '@/models/UserModel'
 import ModelBase from '@/models/ModelBase'
-import GreetingModel from '@/models/GreetingModel'
 
 type Params = {
   user?: UserModel
@@ -17,11 +16,11 @@ export function validateUserPermissions(params: Params) {
 
   if (permissions?.length) {
     const userPermissions = user?.roles.includes('ROLE_ADMIN')
-      ? ['greetings.list', 'adminGreeting.send']
-      : ['greetings.list']
+      ? ['user.list', 'user.update', 'user.delete']
+      : ['user.list']
 
-    if (entity instanceof GreetingModel) {
-      if (user?.roles.includes('ROLE_ADMIN') || user?.id === entity.author.id) {
+    if (entity instanceof UserModel) {
+      if (user?.roles.includes('ROLE_ADMIN') || user?.id === entity.id) {
         userPermissions.push('greeting.update')
         userPermissions.push('greeting.delete')
       }

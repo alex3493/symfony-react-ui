@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { useApiValidation, useBusyIndicator, useRoutePaths } from '@/hooks'
-import { Button, Card, Form, Spinner } from 'react-bootstrap'
+import { useApiValidation, useRoutePaths } from '@/hooks'
+import { Card, Form } from 'react-bootstrap'
 import Container from 'react-bootstrap/Container'
 import { Link, useNavigate } from 'react-router-dom'
 import { REGISTER_API_ROUTE } from '@/utils'
 import { api } from '@/services'
 import ValidatedControl from '@/components/ValidatedControl'
+import ActionButton from '@/components/ActionButton'
 
 function initialFormValues() {
   return {
@@ -22,9 +23,6 @@ function Register() {
   const { LOGIN_PATH } = useRoutePaths()
   const navigate = useNavigate()
   const { removeErrors } = useApiValidation()
-  const { isEndpointBusy } = useBusyIndicator()
-
-  const disableSubmit = isEndpointBusy(REGISTER_API_ROUTE)
 
   function handleChange(value: string, name: string) {
     setValues({
@@ -132,22 +130,12 @@ function Register() {
               </ValidatedControl>
             </Form.Group>
 
-            <Button
+            <ActionButton
               variant="primary"
+              label="Submit"
               onClick={handleSubmit}
-              disabled={disableSubmit}
-            >
-              {disableSubmit && (
-                <Spinner
-                  as="span"
-                  animation="border"
-                  size="sm"
-                  role="status"
-                  aria-hidden="true"
-                />
-              )}{' '}
-              Submit
-            </Button>
+              route={REGISTER_API_ROUTE}
+            />
           </Form>
         </Card.Body>
         <Card.Footer>

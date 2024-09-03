@@ -22,7 +22,6 @@ See [API project documentation](https://github.com/alex3493/symfony-api/blob/mai
 
 Dropdown menu with the following items:
 
-- Admin Greeting (only available to admin users).
 - Profile: allows update user first / last names and password. Also, if current user has logged in from a mobile app
   before, this list of his registered mobile devices
   is also displayed. (See [API project documentation](https://github.com/alex3493/symfony-api/blob/main/Readme.md) on

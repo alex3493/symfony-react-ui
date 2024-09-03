@@ -1,11 +1,12 @@
-import { Button, Card, Form, Spinner } from 'react-bootstrap'
+import { Card, Form } from 'react-bootstrap'
 import React, { useEffect, useState } from 'react'
 import { api } from '@/services'
 import { FORGOT_PASSWORD_API_ROUTE } from '@/utils'
 import ValidatedControl from '@/components/ValidatedControl'
+import ActionButton from '@/components/ActionButton'
 import { Link, useNavigate } from 'react-router-dom'
 import Container from 'react-bootstrap/Container'
-import { useApiValidation, useBusyIndicator, useRoutePaths } from '@/hooks'
+import { useApiValidation, useRoutePaths } from '@/hooks'
 import { paths } from '@/router'
 
 type ForgotPasswordForm = {
@@ -21,10 +22,6 @@ function ForgotPassword() {
 
   const { LOGIN_PATH } = useRoutePaths()
   const navigate = useNavigate()
-
-  const { isEndpointBusy } = useBusyIndicator()
-
-  const disableSubmit = isEndpointBusy(FORGOT_PASSWORD_API_ROUTE)
 
   const [values, setValues] = useState<ForgotPasswordForm>({
     email: ''
@@ -74,22 +71,12 @@ function ForgotPassword() {
                 </ValidatedControl>
               </Form.Group>
 
-              <Button
+              <ActionButton
                 variant="primary"
+                label="Submit"
                 onClick={handleSubmit}
-                disabled={disableSubmit}
-              >
-                {disableSubmit && (
-                  <Spinner
-                    as="span"
-                    animation="border"
-                    size="sm"
-                    role="status"
-                    aria-hidden="true"
-                  />
-                )}{' '}
-                Submit
-              </Button>
+                route={FORGOT_PASSWORD_API_ROUTE}
+              />
             </Form>
           </Card.Body>
           <Card.Footer>

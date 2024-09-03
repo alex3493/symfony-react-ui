@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import {
-  useApiValidation,
-  useBusyIndicator,
-  useRoutePaths,
-  useSession
-} from '@/hooks'
-import { Alert, Button, Card, Form, Spinner } from 'react-bootstrap'
+import { useApiValidation, useRoutePaths, useSession } from '@/hooks'
+import { Alert, Card, Form } from 'react-bootstrap'
 import Container from 'react-bootstrap/Container'
 import { Link } from 'react-router-dom'
 import { LOGIN_API_ROUTE } from '@/utils'
+import ActionButton from '@/components/ActionButton'
 
 function initialFormValues() {
   return {
@@ -22,10 +18,6 @@ function Login() {
   const { signIn } = useSession()
   const { hasErrors, getErrors, removeErrors } = useApiValidation()
   const { REGISTER_PATH, FORGOT_PASSWORD_PATH } = useRoutePaths()
-
-  const { isEndpointBusy } = useBusyIndicator()
-
-  const disableSubmit = isEndpointBusy(LOGIN_API_ROUTE)
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target
@@ -82,22 +74,11 @@ function Login() {
             {hasErrors('Global', undefined) && (
               <Alert variant="danger">{getErrors('Global', undefined)}</Alert>
             )}
-            <Button
-              variant="primary"
+            <ActionButton
+              label="Submit"
               onClick={handleSubmit}
-              disabled={disableSubmit}
-            >
-              {disableSubmit && (
-                <Spinner
-                  as="span"
-                  animation="border"
-                  size="sm"
-                  role="status"
-                  aria-hidden="true"
-                />
-              )}{' '}
-              Submit
-            </Button>
+              route={LOGIN_API_ROUTE}
+            />
           </Form>
         </Card.Body>
         <Card.Footer>

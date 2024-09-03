@@ -1,11 +1,12 @@
-import { Button, Card, Form, Spinner } from 'react-bootstrap'
+import { Card, Form } from 'react-bootstrap'
 import React, { useEffect, useState } from 'react'
 import { api } from '@/services'
 import { RESET_PASSWORD_API_ROUTE } from '@/utils'
 import ValidatedControl from '@/components/ValidatedControl'
+import ActionButton from '@/components/ActionButton'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import Container from 'react-bootstrap/Container'
-import { useApiValidation, useBusyIndicator, useRoutePaths } from '@/hooks'
+import { useApiValidation, useRoutePaths } from '@/hooks'
 import { paths } from '@/router'
 
 type ResetPasswordForm = {
@@ -24,10 +25,6 @@ function ResetPassword() {
   const [searchParams] = useSearchParams()
   const { LOGIN_PATH } = useRoutePaths()
   const navigate = useNavigate()
-
-  const { isEndpointBusy } = useBusyIndicator()
-
-  const disableSubmit = isEndpointBusy(RESET_PASSWORD_API_ROUTE)
 
   const [values, setValues] = useState<ResetPasswordForm>({
     email: '',
@@ -109,22 +106,12 @@ function ResetPassword() {
                 </ValidatedControl>
               </Form.Group>
 
-              <Button
+              <ActionButton
                 variant="primary"
+                label="Set Password"
                 onClick={handleSubmit}
-                disabled={disableSubmit}
-              >
-                {disableSubmit && (
-                  <Spinner
-                    as="span"
-                    animation="border"
-                    size="sm"
-                    role="status"
-                    aria-hidden="true"
-                  />
-                )}{' '}
-                Set Password
-              </Button>
+                route={RESET_PASSWORD_API_ROUTE}
+              />
             </Form>
           </Card.Body>
           <Card.Footer>

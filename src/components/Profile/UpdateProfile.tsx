@@ -1,9 +1,10 @@
-import { Button, Card, Form, Spinner } from 'react-bootstrap'
+import { Card, Form } from 'react-bootstrap'
 import React, { useState } from 'react'
-import { useBusyIndicator, useSession } from '@/hooks'
+import { useSession } from '@/hooks'
 import { api } from '@/services'
 import { PROFILE_UPDATE_API_ROUTE } from '@/utils'
 import ValidatedControl from '@/components/ValidatedControl'
+import ActionButton from '@/components/ActionButton'
 
 type ProfileUpdateForm = {
   email: string
@@ -13,8 +14,6 @@ type ProfileUpdateForm = {
 
 function UpdateProfile() {
   const { user, updateUser } = useSession()
-
-  const { isEndpointBusy } = useBusyIndicator()
 
   const [values, setValues] = useState<ProfileUpdateForm>({
     email: user?.email || '',
@@ -28,8 +27,6 @@ function UpdateProfile() {
       [name]: value
     })
   }
-
-  const disableSubmit = isEndpointBusy(PROFILE_UPDATE_API_ROUTE)
 
   async function handleSubmit() {
     try {
@@ -91,22 +88,12 @@ function UpdateProfile() {
               </ValidatedControl>
             </Form.Group>
 
-            <Button
-              variant="primary"
+            <ActionButton
               onClick={handleSubmit}
-              disabled={disableSubmit}
-            >
-              {disableSubmit && (
-                <Spinner
-                  as="span"
-                  animation="border"
-                  size="sm"
-                  role="status"
-                  aria-hidden="true"
-                />
-              )}{' '}
-              Submit
-            </Button>
+              variant="primary"
+              label="Submit"
+              route={PROFILE_UPDATE_API_ROUTE}
+            />
           </Form>
         </Card.Body>
       </Card>
