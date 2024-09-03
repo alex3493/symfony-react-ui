@@ -1,4 +1,4 @@
-import { Button, Card, Spinner, Table } from 'react-bootstrap'
+import { Card, Table } from 'react-bootstrap'
 import React from 'react'
 import { useBusyIndicator, useSession } from '@/hooks'
 import RegisteredDeviceModel from '@/models/RegisteredDeviceModel'
@@ -85,22 +85,12 @@ function RegisteredDevices() {
             </tbody>
           </Table>
           {user && user.auth_tokens.length > 0 && (
-            <Button
+            <ActionButton
+              label="Log out from all devices"
               variant="danger"
               onClick={handleSignOut}
-              disabled={disableSignOutSubmit}
-            >
-              {disableSignOutSubmit && (
-                <Spinner
-                  as="span"
-                  animation="border"
-                  size="sm"
-                  role="status"
-                  aria-hidden="true"
-                />
-              )}{' '}
-              Log out from all devices
-            </Button>
+              route={LOGOUT_FROM_ALL_DEVICES_API_ROUTE}
+            />
           )}
         </Card.Body>
       </Card>

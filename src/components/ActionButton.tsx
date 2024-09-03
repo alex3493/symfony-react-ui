@@ -7,12 +7,14 @@ type Props = {
   variant?: string | undefined
   onClick: () => void
   route: string
+  // There are cases when we have to disable a button, not showing activity spinner.
   disabled?: boolean | undefined
 }
 
 function ActionButton(props: Props) {
   const { label, variant = 'primary', onClick, route, disabled } = props
 
+  // Check activity for given endpoint and show spinner.
   const { isEndpointBusy } = useBusyIndicator()
   const showSpinner = isEndpointBusy(route)
 

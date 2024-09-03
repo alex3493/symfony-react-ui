@@ -1,9 +1,10 @@
-import { Button, Card, Form, Spinner } from 'react-bootstrap'
+import { Card, Form } from 'react-bootstrap'
 import React, { useState } from 'react'
-import { useBusyIndicator, useSession } from '@/hooks'
+import { useSession } from '@/hooks'
 import { api } from '@/services'
 import { CHANGE_PASSWORD_API_ROUTE } from '@/utils'
 import ValidatedControl from '@/components/ValidatedControl'
+import ActionButton from '@/components/ActionButton'
 
 type ChangePasswordForm = {
   current_password: string
@@ -20,16 +21,12 @@ function ChangePassword() {
 
   const { signOut } = useSession()
 
-  const { isEndpointBusy } = useBusyIndicator()
-
   function handleChange(value: string, name: string) {
     setValues({
       ...values,
       [name]: value
     })
   }
-
-  const disableSubmit = isEndpointBusy(CHANGE_PASSWORD_API_ROUTE)
 
   async function handleSubmit() {
     try {
@@ -95,22 +92,12 @@ function ChangePassword() {
               </ValidatedControl>
             </Form.Group>
 
-            <Button
-              variant="primary"
+            <ActionButton
               onClick={handleSubmit}
-              disabled={disableSubmit}
-            >
-              {disableSubmit && (
-                <Spinner
-                  as="span"
-                  animation="border"
-                  size="sm"
-                  role="status"
-                  aria-hidden="true"
-                />
-              )}{' '}
-              Change Password
-            </Button>
+              variant="primary"
+              label="Submit"
+              route={CHANGE_PASSWORD_API_ROUTE}
+            />
           </Form>
         </Card.Body>
       </Card>
