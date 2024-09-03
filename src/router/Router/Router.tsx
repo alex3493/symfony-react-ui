@@ -22,10 +22,7 @@ function Router() {
       <Route
         path={ROOT_PATH}
         element={
-          <PrivateRoute
-            permissions={['greetings.list']}
-            redirectTo={LOGIN_PATH}
-          >
+          <PrivateRoute permissions={['user.list']} redirectTo={LOGIN_PATH}>
             <MercureProvider>
               <Home />
             </MercureProvider>

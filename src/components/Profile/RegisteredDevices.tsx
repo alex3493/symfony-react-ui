@@ -7,6 +7,7 @@ import {
   LOGOUT_FROM_DEVICE_API_ROUTE
 } from '@/utils'
 import { api } from '@/services'
+import ActionButton from '@/components/ActionButton'
 
 function RegisteredDevices() {
   const { user, updateUser } = useSession()
@@ -39,15 +40,6 @@ function RegisteredDevices() {
     }
   }
 
-  const disableDeviceLogoutSubmit = (device: RegisteredDeviceModel) => {
-    const url = LOGOUT_FROM_DEVICE_API_ROUTE.replace(
-      '{tokenId}',
-      device.id.toString()
-    )
-
-    return isEndpointBusy(url)
-  }
-
   const disableSignOutSubmit = isEndpointBusy(LOGOUT_FROM_ALL_DEVICES_API_ROUTE)
 
   return (
@@ -72,25 +64,16 @@ function RegisteredDevices() {
                     <td>{device.getCreatedAt()}</td>
                     <td>{device.getLastUsedAt()}</td>
                     <td>
-                      <Button
+                      <ActionButton
                         variant="warning"
                         onClick={() => handleLogout(device)}
-                        disabled={
-                          disableSignOutSubmit ||
-                          disableDeviceLogoutSubmit(device)
-                        }
-                      >
-                        {disableDeviceLogoutSubmit(device) && (
-                          <Spinner
-                            as="span"
-                            animation="border"
-                            size="sm"
-                            role="status"
-                            aria-hidden="true"
-                          />
-                        )}{' '}
-                        Log out
-                      </Button>
+                        label="Log out"
+                        disabled={disableSignOutSubmit}
+                        route={LOGOUT_FROM_DEVICE_API_ROUTE.replace(
+                          '{tokenId}',
+                          device.id.toString()
+                        )}
+                      />
                     </td>
                   </tr>
                 ))

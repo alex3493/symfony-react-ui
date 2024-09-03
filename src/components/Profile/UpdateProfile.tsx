@@ -89,7 +89,7 @@ function UpdateProfile() {
             </Form.Group>
 
             <ActionButton
-              action={handleSubmit}
+              onClick={handleSubmit}
               variant="primary"
               label="Submit"
               route={PROFILE_UPDATE_API_ROUTE}

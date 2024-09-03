@@ -5,20 +5,25 @@ import React from 'react'
 type Props = {
   label: string
   variant?: string | undefined
-  action: () => void
+  onClick: () => void
   route: string
+  disabled?: boolean | undefined
 }
 
 function ActionButton(props: Props) {
-  const { label, variant = 'primary', action, route } = props
+  const { label, variant = 'primary', onClick, route, disabled } = props
 
   const { isEndpointBusy } = useBusyIndicator()
-  const disableSubmit = isEndpointBusy(route)
+  const showSpinner = isEndpointBusy(route)
 
   return (
     <>
-      <Button variant={variant} onClick={action} disabled={disableSubmit}>
-        {disableSubmit && (
+      <Button
+        variant={variant}
+        onClick={onClick}
+        disabled={showSpinner || disabled}
+      >
+        {showSpinner && (
           <Spinner
             as="span"
             animation="border"
