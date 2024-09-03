@@ -5,7 +5,7 @@ import { RESET_PASSWORD_API_ROUTE } from '@/utils'
 import ValidatedControl from '@/components/ValidatedControl'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import Container from 'react-bootstrap/Container'
-import { useApiValidation, useRoutePaths } from '@/hooks'
+import { useApiValidation, useBusyIndicator, useRoutePaths } from '@/hooks'
 import { paths } from '@/router'
 
 type ResetPasswordForm = {
@@ -21,12 +21,13 @@ function ResetPassword() {
     removeErrors('User')
   }, [removeErrors])
 
-  const [resetPasswordRequestStatus, setResetPasswordRequestStatus] =
-    useState('success')
-
   const [searchParams] = useSearchParams()
   const { LOGIN_PATH } = useRoutePaths()
   const navigate = useNavigate()
+
+  const { isEndpointBusy } = useBusyIndicator()
+
+  const disableSubmit = isEndpointBusy(RESET_PASSWORD_API_ROUTE)
 
   const [values, setValues] = useState<ResetPasswordForm>({
     email: '',
@@ -42,8 +43,6 @@ function ResetPassword() {
   }
 
   async function handleSubmit() {
-    setResetPasswordRequestStatus('loading')
-
     try {
       await api.post(RESET_PASSWORD_API_ROUTE, {
         ...values,
@@ -54,8 +53,6 @@ function ResetPassword() {
       /**
        * an error handler can be added here
        */
-    } finally {
-      setResetPasswordRequestStatus('success')
     }
   }
 
@@ -115,9 +112,9 @@ function ResetPassword() {
               <Button
                 variant="primary"
                 onClick={handleSubmit}
-                disabled={resetPasswordRequestStatus === 'loading'}
+                disabled={disableSubmit}
               >
-                {resetPasswordRequestStatus === 'loading' && (
+                {disableSubmit && (
                   <Spinner
                     as="span"
                     animation="border"

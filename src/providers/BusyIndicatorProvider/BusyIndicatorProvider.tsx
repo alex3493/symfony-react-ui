@@ -27,6 +27,8 @@ function BusyIndicatorProvider(props: Props) {
     endpoint: BusyEndpointData
   }
 
+  // TODO: Do not register /token/refresh as busy activity.
+
   function busyEndpointsReducer(
     busyEndpoints: BusyEndpoint[],
     action: BusyIndicatorUpdateAction

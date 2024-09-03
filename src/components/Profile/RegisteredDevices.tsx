@@ -75,7 +75,10 @@ function RegisteredDevices() {
                       <Button
                         variant="warning"
                         onClick={() => handleLogout(device)}
-                        disabled={disableDeviceLogoutSubmit(device)}
+                        disabled={
+                          disableSignOutSubmit ||
+                          disableDeviceLogoutSubmit(device)
+                        }
                       >
                         {disableDeviceLogoutSubmit(device) && (
                           <Spinner

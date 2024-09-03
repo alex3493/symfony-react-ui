@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useRoutePaths } from '@/hooks'
+import { useApiValidation, useBusyIndicator, useRoutePaths } from '@/hooks'
 import { Button, Card, Form, Spinner } from 'react-bootstrap'
 import Container from 'react-bootstrap/Container'
 import { Link, useNavigate } from 'react-router-dom'
@@ -19,9 +19,12 @@ function initialFormValues() {
 
 function Register() {
   const [values, setValues] = useState(initialFormValues)
-  const [registerRequestStatus, setRegisterRequestStatus] = useState('success')
   const { LOGIN_PATH } = useRoutePaths()
   const navigate = useNavigate()
+  const { removeErrors } = useApiValidation()
+  const { isEndpointBusy } = useBusyIndicator()
+
+  const disableSubmit = isEndpointBusy(REGISTER_API_ROUTE)
 
   function handleChange(value: string, name: string) {
     setValues({
@@ -31,8 +34,6 @@ function Register() {
   }
 
   async function handleSubmit() {
-    setRegisterRequestStatus('loading')
-
     try {
       await api.post(REGISTER_API_ROUTE, values)
       navigate(LOGIN_PATH)
@@ -40,15 +41,12 @@ function Register() {
       /**
        * an error handler can be added here
        */
-    } finally {
-      setRegisterRequestStatus('success')
     }
   }
 
   useEffect(() => {
-    // Clean the function to prevent memory leak.
-    return () => setRegisterRequestStatus('success')
-  }, [])
+    removeErrors('User')
+  }, [removeErrors])
 
   return (
     <Container className="p-3 my-5 d-flex flex-column w-50">
@@ -137,9 +135,9 @@ function Register() {
             <Button
               variant="primary"
               onClick={handleSubmit}
-              disabled={registerRequestStatus === 'loading'}
+              disabled={disableSubmit}
             >
-              {registerRequestStatus === 'loading' && (
+              {disableSubmit && (
                 <Spinner
                   as="span"
                   animation="border"
