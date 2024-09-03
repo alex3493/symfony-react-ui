@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import { useApiValidation, useRoutePaths, useSession } from '@/hooks'
+import {
+  useApiValidation,
+  useBusyIndicator,
+  useRoutePaths,
+  useSession
+} from '@/hooks'
 import { Alert, Button, Card, Form, Spinner } from 'react-bootstrap'
 import Container from 'react-bootstrap/Container'
 import { Link } from 'react-router-dom'
+import { LOGIN_API_ROUTE } from '@/utils'
 
 function initialFormValues() {
   return {
@@ -13,10 +19,13 @@ function initialFormValues() {
 
 function Login() {
   const [values, setValues] = useState(initialFormValues)
-  const [loginRequestStatus, setLoginRequestStatus] = useState('success')
   const { signIn } = useSession()
   const { hasErrors, getErrors, removeErrors } = useApiValidation()
   const { REGISTER_PATH, FORGOT_PASSWORD_PATH } = useRoutePaths()
+
+  const { isEndpointBusy } = useBusyIndicator()
+
+  const disableSubmit = isEndpointBusy(LOGIN_API_ROUTE)
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = event.target
@@ -30,24 +39,17 @@ function Login() {
   }
 
   async function handleSubmit() {
-    setLoginRequestStatus('loading')
-
     try {
       await signIn(values)
     } catch (error) {
       /**
        * an error handler can be added here
        */
-    } finally {
-      setLoginRequestStatus('success')
     }
   }
 
   useEffect(() => {
     removeErrors('Global')
-
-    // clean the function to prevent memory leak
-    return () => setLoginRequestStatus('success')
   }, [removeErrors])
 
   return (
@@ -83,9 +85,9 @@ function Login() {
             <Button
               variant="primary"
               onClick={handleSubmit}
-              disabled={loginRequestStatus === 'loading'}
+              disabled={disableSubmit}
             >
-              {loginRequestStatus === 'loading' && (
+              {disableSubmit && (
                 <Spinner
                   as="span"
                   animation="border"

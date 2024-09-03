@@ -1,6 +1,6 @@
 import { Button, Card, Form, Spinner } from 'react-bootstrap'
 import React, { useState } from 'react'
-import { useSession } from '@/hooks'
+import { useBusyIndicator, useSession } from '@/hooks'
 import { api } from '@/services'
 import { CHANGE_PASSWORD_API_ROUTE } from '@/utils'
 import ValidatedControl from '@/components/ValidatedControl'
@@ -12,9 +12,6 @@ type ChangePasswordForm = {
 }
 
 function ChangePassword() {
-  const [changePasswordRequestStatus, setChangePasswordRequestStatus] =
-    useState('success')
-
   const [values, setValues] = useState<ChangePasswordForm>({
     current_password: '',
     password: '',
@@ -23,6 +20,8 @@ function ChangePassword() {
 
   const { signOut } = useSession()
 
+  const { isEndpointBusy } = useBusyIndicator()
+
   function handleChange(value: string, name: string) {
     setValues({
       ...values,
@@ -30,9 +29,9 @@ function ChangePassword() {
     })
   }
 
-  async function handleSubmit() {
-    setChangePasswordRequestStatus('loading')
+  const disableSubmit = isEndpointBusy(CHANGE_PASSWORD_API_ROUTE)
 
+  async function handleSubmit() {
     try {
       await api.patch(CHANGE_PASSWORD_API_ROUTE, values)
       signOut()
@@ -40,8 +39,6 @@ function ChangePassword() {
       /**
        * an error handler can be added here
        */
-    } finally {
-      setChangePasswordRequestStatus('success')
     }
   }
 
@@ -101,9 +98,9 @@ function ChangePassword() {
             <Button
               variant="primary"
               onClick={handleSubmit}
-              disabled={changePasswordRequestStatus === 'loading'}
+              disabled={disableSubmit}
             >
-              {changePasswordRequestStatus === 'loading' && (
+              {disableSubmit && (
                 <Spinner
                   as="span"
                   animation="border"
