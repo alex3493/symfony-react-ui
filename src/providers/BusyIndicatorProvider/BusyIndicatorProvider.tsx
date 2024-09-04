@@ -134,15 +134,6 @@ function BusyIndicatorProvider(props: Props) {
     }
 
     const onResponseError = (error: AxiosError): Promise<AxiosError> => {
-      // console.log(
-      //   'BusyIndicator onResponseError',
-      //   error.config?.method,
-      //   error.config?.url,
-      //   // JSON.stringify(error, null, 2),
-      // );
-
-      // TODO: For 401 error we may force reset busy indicator data.
-
       if (error.config?.url && error.config?.method) {
         dispatch({
           type: 'decrement',
@@ -213,9 +204,11 @@ function BusyIndicatorProvider(props: Props) {
     activity?: 'all' | 'sending' | 'receiving'
   ) => {
     if (!activity || activity === 'all') {
+      // Ignore query string when matching endpoint.
       return busyEndpoints.some((e) => e.url.split('?')[0] === endpoint)
     }
     return busyEndpoints.some(
+      // Ignore query string when matching endpoint.
       (e) => e.url.split('?')[0] === endpoint && e.type === activity
     )
   }
