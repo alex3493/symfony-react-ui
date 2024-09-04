@@ -12,6 +12,9 @@ type Props = {
   children: ReactNode
 }
 
+// Do not display activity indicator for given endpoints.
+const excludedEndpoints = ['/token/refresh']
+
 function BusyIndicatorProvider(props: Props) {
   const { children } = props
 
@@ -27,8 +30,6 @@ function BusyIndicatorProvider(props: Props) {
     endpoint: BusyEndpointData
   }
 
-  // TODO: Do not register /token/refresh as busy activity.
-
   function busyEndpointsReducer(
     busyEndpoints: BusyEndpoint[],
     action: BusyIndicatorUpdateAction
@@ -40,6 +41,10 @@ function BusyIndicatorProvider(props: Props) {
       busyEndpoints.findIndex((e) => e.url === url && e.type === type)
 
     console.log('Dispatched action :: busy indicator', action)
+
+    if (excludedEndpoints.includes(action.endpoint.url)) {
+      return updated
+    }
 
     switch (action.type) {
       case 'reset':
@@ -72,7 +77,7 @@ function BusyIndicatorProvider(props: Props) {
         } else {
           // Should never be the case!
           console.log(
-            '***** ***** Busy endpoint not found',
+            'ERROR :: Busy endpoint not found',
             action.endpoint.url,
             action.endpoint.type,
             busyEndpoints
@@ -87,13 +92,6 @@ function BusyIndicatorProvider(props: Props) {
     const onRequest = (
       config: InternalAxiosRequestConfig<AxiosRequestConfig>
     ): InternalAxiosRequestConfig<AxiosRequestConfig> => {
-      // console.log(
-      //   'BusyIndicator onRequest',
-      //   config.method,
-      //   config.url,
-      //   // JSON.stringify(config, null, 2),
-      // );
-
       if (config.url && config.method) {
         dispatch({
           type: 'increment',
@@ -109,13 +107,6 @@ function BusyIndicatorProvider(props: Props) {
     }
 
     const onResponse = (response: AxiosResponse): AxiosResponse => {
-      // console.log(
-      //   'BusyIndicator onResponse',
-      //   response.config.method,
-      //   response.config.url
-      //   // JSON.stringify(response, null, 2),
-      // )
-
       if (response.config.url && response.config.method) {
         dispatch({
           type: 'decrement',
