@@ -51,10 +51,6 @@ Dropdown menu with the following items:
 6. Open the link displayed in terminal when `npm run dev` is running (with API docker container running it will most
    likely point to http://localhost:3001, because port 3000 is occupied by Symfony Mercure)
 
-### *** IMPORTANT *** API is configured to accept https requests and uses self-signed SSL certificate.
-
-**Do not forget** to visit https://symfony.test and accept browser security warning, otherwise all requests to API with
-fail.
 
 
 
