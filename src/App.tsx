@@ -1,6 +1,7 @@
 import { BrowserRouter } from 'react-router-dom'
 import { NavBar } from './components'
 import { AuthProvider } from './providers'
+import { MercureProvider } from './providers'
 import { Router } from './router'
 import Container from 'react-bootstrap/Container'
 import { ApiValidationProvider } from '@/providers/ApiValidationProvider'
@@ -14,10 +15,12 @@ function App() {
         <LoadingProgressBar />
         <ApiValidationProvider>
           <AuthProvider>
-            <NavBar />
-            <Container>
-              <Router />
-            </Container>
+            <MercureProvider>
+              <NavBar />
+              <Container>
+                <Router />
+              </Container>
+            </MercureProvider>
           </AuthProvider>
         </ApiValidationProvider>
       </BusyIndicatorProvider>

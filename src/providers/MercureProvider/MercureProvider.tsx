@@ -168,13 +168,13 @@ function MercureProvider(props: Props) {
 
       subscription.eventSource?.close()
       subscriptions.current.splice(existingIndex, 1)
-    }
 
-    console.log(
-      'Removed subscription: current subscriptions',
-      topic,
-      subscriptions.current
-    )
+      console.log(
+        'Removed subscription: current subscriptions',
+        topic,
+        subscriptions.current
+      )
+    }
   }
 
   function removeEventHandler(
@@ -208,6 +208,13 @@ function MercureProvider(props: Props) {
     }
   }
 
+  function removeAllSubscriptions() {
+    console.log('Removing all subscriptions')
+    subscriptions.current.forEach((subscription) => {
+      removeSubscription(subscription.topic)
+    })
+  }
+
   return (
     <MercureContext.Provider
       value={{
@@ -215,7 +222,8 @@ function MercureProvider(props: Props) {
         addSubscription,
         removeSubscription,
         addEventHandler,
-        removeEventHandler
+        removeEventHandler,
+        removeAllSubscriptions
       }}
     >
       {children}
