@@ -9,7 +9,7 @@ import { AxiosError } from 'axios'
 
 function NavBar() {
   const { isAuthenticated, user, signOut } = useSession()
-  const { PROFILE_PATH, ROOT_PATH } = useRoutePaths()
+  const { PROFILE_PATH, USER_LIST_PATH, ROOT_PATH } = useRoutePaths()
   const { updateUser } = useSession()
 
   const {
@@ -19,19 +19,18 @@ function NavBar() {
     removeAllSubscriptions
   } = useMercureUpdates()
 
-  // TODO: check update action causer and act only if not self.
   const subscriptionCallback = useCallback(
     (event: MessageEvent) => {
       const data = JSON.parse(event.data)
       console.log('***** Mercure Event for current user', data)
       switch (data.action) {
         // Update profile action, we update current user here.
-        case 'update':
-          updateUser(data.user)
+        case 'user_update':
+          updateUser(data.item)
           break
         // User account delete action, we have to sign out immediately.
-        case 'soft_delete':
-        case 'force_delete':
+        case 'user_soft_delete':
+        case 'user_force_delete':
           signOut()
           break
         default:
@@ -63,6 +62,8 @@ function NavBar() {
       removeAllSubscriptions()
     }
 
+    // TODO: this clean-up method should be called when the component is unmounted.
+    // TODO: we have an issue here - clean-up is called on every menu or mercure update!
     return () => {
       console.log('Navbar clean-up')
       removeAllSubscriptions()
@@ -87,13 +88,23 @@ function NavBar() {
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
               {isAuthenticated && (
-                <NavDropdown title={user?.display_name} id="basic-nav-dropdown">
-                  <NavDropdown.Item as={Link} to={PROFILE_PATH}>
-                    Profile
-                  </NavDropdown.Item>
-                  <NavDropdown.Divider />
-                  <NavDropdown.Item onClick={signOut}>Log out</NavDropdown.Item>
-                </NavDropdown>
+                <>
+                  <Nav.Link as={Link} to={USER_LIST_PATH}>
+                    Users
+                  </Nav.Link>
+                  <NavDropdown
+                    title={user?.display_name}
+                    id="basic-nav-dropdown"
+                  >
+                    <NavDropdown.Item as={Link} to={PROFILE_PATH}>
+                      Profile
+                    </NavDropdown.Item>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Item onClick={signOut}>
+                      Log out
+                    </NavDropdown.Item>
+                  </NavDropdown>
+                </>
               )}
             </Nav>
           </Navbar.Collapse>

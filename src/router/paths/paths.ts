@@ -5,6 +5,7 @@ const RESET_PASSWORD_PATH = '/reset-password'
 const FORGOT_PASSWORD_PATH = '/forgot-password'
 const PROFILE_PATH = '/profile'
 const USER_PATH = '/users/:id'
+const USER_LIST_PATH = '/users'
 
 const paths = {
   ROOT_PATH,
@@ -13,7 +14,8 @@ const paths = {
   RESET_PASSWORD_PATH,
   FORGOT_PASSWORD_PATH,
   PROFILE_PATH,
-  USER_PATH
+  USER_PATH,
+  USER_LIST_PATH
 } as const
 
 export default paths

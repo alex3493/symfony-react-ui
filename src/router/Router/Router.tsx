@@ -3,9 +3,9 @@ import { useRoutePaths } from '@/hooks'
 import { Login, Profile, Register, ResetPassword } from '@/pages'
 import { PrivateRoute } from '../PrivateRoute'
 import { PublicRoute } from '../PublicRoute'
-import { MercureProvider } from '@/providers'
 import { ForgotPassword } from '@/pages/ForgotPassword'
 import { Home } from '@/pages/Home'
+import { UserList } from '@/pages/UserList'
 
 function Router() {
   const {
@@ -14,6 +14,7 @@ function Router() {
     REGISTER_PATH,
     RESET_PASSWORD_PATH,
     FORGOT_PASSWORD_PATH,
+    USER_LIST_PATH,
     ROOT_PATH
   } = useRoutePaths()
 
@@ -22,10 +23,8 @@ function Router() {
       <Route
         path={ROOT_PATH}
         element={
-          <PrivateRoute permissions={['user.list']} redirectTo={LOGIN_PATH}>
-            <MercureProvider>
-              <Home />
-            </MercureProvider>
+          <PrivateRoute redirectTo={LOGIN_PATH}>
+            <Home />
           </PrivateRoute>
         }
       />
@@ -71,6 +70,15 @@ function Router() {
         element={
           <PrivateRoute redirectTo={LOGIN_PATH}>
             <Profile />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path={USER_LIST_PATH}
+        element={
+          <PrivateRoute permissions={['user.list']} redirectTo={LOGIN_PATH}>
+            <UserList />
           </PrivateRoute>
         }
       />
