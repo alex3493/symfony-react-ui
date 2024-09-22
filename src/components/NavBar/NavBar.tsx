@@ -15,7 +15,7 @@ function NavBar() {
   const {
     discoverMercureHub,
     addSubscription,
-    removeSubscription,
+    // removeSubscription,
     removeAllSubscriptions
   } = useMercureUpdates()
 
@@ -72,7 +72,10 @@ function NavBar() {
     addSubscription,
     discoverMercureHub,
     removeAllSubscriptions,
-    removeSubscription,
+    // removeSubscription,
+    // TODO: enabling the dependency below makes nav bar re-render on every Mercure update!
+    // Looks like subscriptionCallback dependencies (signOut, updateUser) are breaking the logic.
+    // Both functions are just regular JS class methods
     subscriptionCallback,
     user?.id
   ])

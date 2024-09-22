@@ -1,8 +1,7 @@
-import { ReactNode, useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { ReactNode, useCallback, useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { AxiosError } from 'axios'
 import { AuthContext, SignInCredentials } from '@/contexts'
-import { paths } from '@/router'
 import { api, setAuthorizationHeader } from '@/services'
 import {
   createSessionCookies,
@@ -24,7 +23,6 @@ function AuthProvider(props: Props) {
 
   const [user, setUser] = useState<UserModel>()
   const [loadingUserData, setLoadingUserData] = useState(true)
-  const navigate = useNavigate()
   const { pathname } = useLocation()
 
   const token = getToken()
@@ -64,24 +62,31 @@ function AuthProvider(props: Props) {
     }
   }
 
-  function signOut() {
+  const signOut = useCallback(() => {
     removeSessionCookies()
     setUser(undefined)
     setLoadingUserData(false)
-    navigate(paths.LOGIN_PATH)
-  }
+  }, [])
 
-  function updateUser(user: UserModel) {
-    setUser(new UserModel(user))
-  }
+  const updateUser = useCallback(
+    (user: UserModel) => {
+      setUser(new UserModel(user))
+    },
+    [setUser]
+  )
 
+  // TODO: Not sure we ever need this effect.
   useEffect(() => {
     if (!token) {
       removeSessionCookies()
       setUser(undefined)
       setLoadingUserData(false)
     }
-  }, [navigate, pathname, token])
+
+    return () => {
+      console.log('AuthProvider useEffect clean-up')
+    }
+  }, [pathname, token])
 
   const notify = (author: string, text: string) =>
     toast(
