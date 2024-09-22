@@ -10,7 +10,7 @@ import { AxiosError } from 'axios'
 function NavBar() {
   const { isAuthenticated, user, signOut } = useSession()
   const { PROFILE_PATH, USER_LIST_PATH, ROOT_PATH } = useRoutePaths()
-  const { updateUser } = useSession()
+  const { updateUser, mercureHubUrl } = useSession()
 
   const {
     discoverMercureHub,
@@ -45,7 +45,7 @@ function NavBar() {
   useEffect(() => {
     async function subscribe(userId: string | number) {
       try {
-        await discoverMercureHub('http://localhost:3000/.well-known/mercure')
+        await discoverMercureHub(mercureHubUrl)
         await addSubscription(`user::update::${userId}`, subscriptionCallback)
       } catch (error) {
         return error as AxiosError
@@ -71,11 +71,8 @@ function NavBar() {
   }, [
     addSubscription,
     discoverMercureHub,
+    mercureHubUrl,
     removeAllSubscriptions,
-    // removeSubscription,
-    // TODO: enabling the dependency below makes nav bar re-render on every Mercure update!
-    // Looks like subscriptionCallback dependencies (signOut, updateUser) are breaking the logic.
-    // Both functions are just regular JS class methods
     subscriptionCallback,
     user?.id
   ])

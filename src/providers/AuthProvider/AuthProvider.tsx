@@ -1,6 +1,6 @@
 import { ReactNode, useCallback, useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { AxiosError } from 'axios'
+import { AxiosError, AxiosHeaders } from 'axios'
 import { AuthContext, SignInCredentials } from '@/contexts'
 import { api, setAuthorizationHeader } from '@/services'
 import {
@@ -24,6 +24,8 @@ function AuthProvider(props: Props) {
   const [user, setUser] = useState<UserModel>()
   const [loadingUserData, setLoadingUserData] = useState(true)
   const { pathname } = useLocation()
+
+  const [mercureHubUrl, setMercureHubUrl] = useState('')
 
   const token = getToken()
   const isAuthenticated = Boolean(token)
@@ -54,6 +56,20 @@ function AuthProvider(props: Props) {
       if (response?.data) {
         const { user } = response.data
         setUser(new UserModel(user))
+
+        const headers = response.headers as AxiosHeaders
+
+        const link = headers.get(
+          'Link',
+          /<([^>]+)>;\s+rel=(?:mercure|"[^"]*mercure[^"]*")/
+        )
+
+        if (link && link.length === 2) {
+          console.log('Set Mercure Hub URL', link[1])
+          setMercureHubUrl(link[1])
+        } else {
+          console.log('ERROR :: Discovery link missing or invalid')
+        }
       }
     } catch (error) {
       console.log('Error getting user data', error)
@@ -84,7 +100,7 @@ function AuthProvider(props: Props) {
     }
 
     return () => {
-      console.log('AuthProvider useEffect clean-up')
+      console.log('AuthProvider useEffect clean-up', pathname)
     }
   }, [pathname, token])
 
@@ -120,7 +136,8 @@ function AuthProvider(props: Props) {
         loadingUserData,
         signIn,
         signOut,
-        updateUser
+        updateUser,
+        mercureHubUrl
       }}
     >
       {children}
