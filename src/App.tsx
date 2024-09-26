@@ -7,6 +7,7 @@ import { ApiValidationProvider } from '@/providers/ApiValidationProvider'
 import { BusyIndicatorProvider } from '@/providers'
 import { LoadingProgressBar } from '@/components'
 import { StrictMode } from 'react'
+import 'bootstrap-icons/font/bootstrap-icons.css'
 
 function App() {
   return (

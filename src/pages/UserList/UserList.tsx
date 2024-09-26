@@ -5,6 +5,34 @@ import UserModel from '@/models/UserModel'
 import Table from 'react-bootstrap/Table'
 import { Loader } from '@/components'
 
+type SortableHeaderProps = {
+  column: string
+  label: string
+  isOrderedBy: (column: string) => boolean
+  isOrderDesc: () => boolean
+  onClick: (column: string) => void
+}
+
+function SortableHeader(props: SortableHeaderProps) {
+  const { column, label, isOrderedBy, isOrderDesc, onClick } = props
+  return (
+    <th
+      style={{
+        cursor: 'pointer'
+      }}
+      onClick={() => onClick(column)}
+    >
+      {isOrderedBy(column) &&
+        (isOrderDesc() ? (
+          <i className="bi bi-sort-down"></i>
+        ) : (
+          <i className="bi bi-sort-up"></i>
+        ))}{' '}
+      {label}
+    </th>
+  )
+}
+
 function UserList() {
   type Pagination = {
     page: number
@@ -27,59 +55,78 @@ function UserList() {
     async function loadUsers() {
       setDataLoaded(false)
 
-      try {
-        const response = await api.get(USER_LIST_API_ROUTE, {
-          params: pagination
-        })
-        console.log('Load users API response', response)
-        const items = (response?.data?.items || []).map(
-          (g: UserModel) => new UserModel(g)
-        )
-        console.log('Loaded users', items)
-        setItems(items)
-        setDataLoaded(true)
-      } catch (error) {
-        console.log('Error loading users', error)
-      }
+      const response = await api.get(USER_LIST_API_ROUTE, {
+        params: pagination
+      })
+      console.log('Load users API response', response)
+      const items = (response?.data?.items || []).map(
+        (g: UserModel) => new UserModel(g)
+      )
+      console.log('Loaded users', items)
+      setItems(items)
+      setDataLoaded(true)
     }
 
-    loadUsers().catch((e) => console.log(e))
+    loadUsers().catch((error) => {
+      console.log('Error loading users', error)
+      setDataLoaded(true)
+    })
 
     return () => {
       setDataLoaded(false)
     }
   }, [pagination])
+
+  const isOrderedBy = (column: string) => pagination.orderBy === column
+  const isOrderDesc = () => pagination.orderDesc === 1
+
+  const onColumnHeaderClick = (column: string) => {
+    if (isOrderedBy(column)) {
+      // Toggle sort direction.
+      setPagination({ ...pagination, orderDesc: pagination.orderDesc ? 0 : 1 })
+    } else {
+      // Select as order by.
+      setPagination({ ...pagination, orderBy: column })
+    }
+  }
+
   return (
     <div>
       <h1>User List</h1>
-      {!dataLoaded ? (
-        <>Loading</>
-      ) : (
-        <Table striped>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items?.length > 0 ? (
-              items.map((user: UserModel) => (
-                <tr key={user.id}>
-                  <td>{user.display_name}</td>
-                  <td>{user.email}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={2}>
-                  {dataLoaded ? 'No users found' : <Loader />}
-                </td>
+      <Table striped>
+        <thead>
+          <tr>
+            <SortableHeader
+              isOrderDesc={isOrderDesc}
+              isOrderedBy={isOrderedBy}
+              onClick={onColumnHeaderClick}
+              label="Name"
+              column="name"
+            />
+            <SortableHeader
+              isOrderDesc={isOrderDesc}
+              isOrderedBy={isOrderedBy}
+              onClick={onColumnHeaderClick}
+              label="Email"
+              column="email"
+            />
+          </tr>
+        </thead>
+        <tbody>
+          {items?.length > 0 ? (
+            items.map((user: UserModel) => (
+              <tr key={user.id}>
+                <td>{user.display_name}</td>
+                <td>{user.email}</td>
               </tr>
-            )}
-          </tbody>
-        </Table>
-      )}
+            ))
+          ) : (
+            <tr>
+              <td colSpan={2}>{dataLoaded ? 'No users found' : <Loader />}</td>
+            </tr>
+          )}
+        </tbody>
+      </Table>
     </div>
   )
 }
