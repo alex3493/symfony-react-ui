@@ -10,3 +10,12 @@ export const api = setupInterceptors(
     }
   })
 )
+
+export const adminApi = setupInterceptors(
+  axios.create({
+    baseURL: process.env.REACT_APP_ADMIN_API_URL,
+    headers: {
+      Accept: 'application/json'
+    }
+  })
+)

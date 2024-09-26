@@ -13,3 +13,5 @@ export const PROFILE_UPDATE_API_ROUTE = '/account/me/update'
 export const CHANGE_PASSWORD_API_ROUTE = '/account/me/change-password'
 export const LOGOUT_FROM_DEVICE_API_ROUTE = '/account/logout/{tokenId}'
 export const LOGOUT_FROM_ALL_DEVICES_API_ROUTE = '/account/me/sign-out'
+
+export const USER_LIST_API_ROUTE = '/users'
