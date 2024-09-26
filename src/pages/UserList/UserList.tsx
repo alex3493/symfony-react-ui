@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { adminApi } from '@/services'
+import { api } from '@/services'
 import { USER_LIST_API_ROUTE } from '@/utils'
 import UserModel from '@/models/UserModel'
 import Table from 'react-bootstrap/Table'
@@ -8,19 +8,19 @@ import { Loader } from '@/components'
 function UserList() {
   type Pagination = {
     page: number
-    perPage: number
-    query: string
-    sortBy: string
-    sortDesc: boolean
+    limit: number
+    orderBy: string
+    orderDesc: number
+    // query: string
   }
   const [dataLoaded, setDataLoaded] = useState(false)
   const [items, setItems] = useState([])
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
-    perPage: 10,
-    query: '',
-    sortBy: '',
-    sortDesc: false
+    limit: 10,
+    orderBy: 'name',
+    orderDesc: 0
+    // query: ''
   })
 
   useEffect(() => {
@@ -28,7 +28,9 @@ function UserList() {
       setDataLoaded(false)
 
       try {
-        const response = await adminApi.get(USER_LIST_API_ROUTE) // TODO: add query string with page, perPage, etc...
+        const response = await api.get(USER_LIST_API_ROUTE, {
+          params: pagination
+        })
         console.log('Load users API response', response)
         const items = (response?.data?.items || []).map(
           (g: UserModel) => new UserModel(g)
@@ -46,7 +48,7 @@ function UserList() {
     return () => {
       setDataLoaded(false)
     }
-  }, [])
+  }, [pagination])
   return (
     <div>
       <h1>User List</h1>
