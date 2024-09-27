@@ -1,24 +1,22 @@
 export default class ModelBase {
   id: string | number
 
-  created_at: string
-  updated_at?: string | undefined
+  created_at: Date
+  updated_at?: Date | undefined
 
   constructor(model: ModelBase) {
     this.id = model.id || ''
-    this.created_at = model.created_at
-    this.updated_at = model.updated_at || undefined
+    this.created_at = new Date(model.created_at)
+    this.updated_at = model.updated_at ? new Date(model.created_at) : undefined
   }
 
   getCreatedAt() {
-    const date = new Date(this.created_at)
-    return date.toLocaleString()
+    return this.created_at.toLocaleString()
   }
 
   getUpdatedAt() {
     if (!this.updated_at) return ''
-    const date = new Date(this.updated_at)
-    return date.toLocaleString()
+    return this.updated_at.toLocaleString()
   }
 
   isValidId(): boolean {
