@@ -6,13 +6,14 @@ import { Loader } from '@/components'
 import ModelBase from '@/models/ModelBase'
 
 export type ColumnConfig = {
-  name: string
+  key: string
   label: string
   sortable: boolean
+  sortKey?: string
 }
 
 interface TableConfig<T> {
-  mapper: { new (data: ModelBase): T }
+  mapper: (data: T) => T
   columns: ColumnConfig[]
   dataUrl: string
   defaultSortBy: string
@@ -27,9 +28,7 @@ type Pagination = {
   // query: string
 }
 
-function ServerTable<ItemType extends ModelBase>(
-  config: TableConfig<ItemType>
-) {
+function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   const { mapper, columns, dataUrl, defaultSortBy, defaultSortDesc } = config
 
   const [dataLoaded, setDataLoaded] = useState(false)
@@ -50,8 +49,8 @@ function ServerTable<ItemType extends ModelBase>(
         params: pagination
       })
       console.log('Load users API response', response)
-      const items = (response?.data?.items || []).map((g: ItemType) => {
-        return new mapper(g)
+      const items = (response?.data?.items || []).map((data: T) => {
+        return mapper(data)
       })
       console.log('Loaded users', items)
       setItems(items)
@@ -66,18 +65,18 @@ function ServerTable<ItemType extends ModelBase>(
     return () => {
       setDataLoaded(false)
     }
-  }, [dataUrl, pagination])
+  }, [dataUrl, mapper, pagination])
 
-  const isOrderedBy = (name: string) => pagination.orderBy === name
+  const isOrderedBy = (sortKey: string) => pagination.orderBy === sortKey
   const isOrderDesc = () => pagination.orderDesc === 1
 
-  const onColumnHeaderClick = (name: string) => {
-    if (isOrderedBy(name)) {
+  const onColumnHeaderClick = (sortKey: string) => {
+    if (isOrderedBy(sortKey)) {
       // Toggle sort direction.
       setPagination({ ...pagination, orderDesc: pagination.orderDesc ? 0 : 1 })
     } else {
       // Select as order by.
-      setPagination({ ...pagination, orderBy: name })
+      setPagination({ ...pagination, orderBy: sortKey })
     }
   }
 
@@ -88,15 +87,15 @@ function ServerTable<ItemType extends ModelBase>(
           {columns.map((column) =>
             column.sortable ? (
               <SortableHeader
-                key={column.name}
+                key={column.sortKey}
                 isOrderDesc={isOrderDesc}
                 isOrderedBy={isOrderedBy}
                 onClick={onColumnHeaderClick}
                 label={column.label}
-                name={column.name}
+                sortKey={column.sortKey || column.key}
               />
             ) : (
-              <th key={column.name}>{column.label}</th>
+              <th key={column.key}>{column.label}</th>
             )
           )}
         </tr>
@@ -106,7 +105,9 @@ function ServerTable<ItemType extends ModelBase>(
           items.map((item: T) => (
             <tr key={item.id}>
               {columns.map((column: ColumnConfig) => (
-                <td key={column.name}>{(item as any)[column.name]}</td>
+                <td key={column.key}>
+                  {item[column.key as keyof typeof item] as string}
+                </td>
               ))}
             </tr>
           ))

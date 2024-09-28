@@ -1,5 +1,5 @@
 type SortableHeaderProps = {
-  name: string
+  sortKey: string
   label: string
   isOrderedBy: (column: string) => boolean
   isOrderDesc: () => boolean
@@ -7,15 +7,15 @@ type SortableHeaderProps = {
 }
 
 function SortableHeader(props: SortableHeaderProps) {
-  const { name, label, isOrderedBy, isOrderDesc, onClick } = props
+  const { sortKey, label, isOrderedBy, isOrderDesc, onClick } = props
   return (
     <th
       style={{
         cursor: 'pointer'
       }}
-      onClick={() => onClick(name)}
+      onClick={() => onClick(sortKey)}
     >
-      {isOrderedBy(name) &&
+      {isOrderedBy(sortKey) &&
         (isOrderDesc() ? (
           <i className="bi bi-sort-down"></i>
         ) : (

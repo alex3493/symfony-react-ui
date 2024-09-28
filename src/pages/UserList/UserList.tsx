@@ -1,102 +1,17 @@
-import { useEffect, useState } from 'react'
-import { api } from '@/services'
 import { USER_LIST_API_ROUTE } from '@/utils'
 import UserModel from '@/models/UserModel'
 import { ColumnConfig, ServerTable } from '@/components/ServerTable'
 
-type SortableHeaderProps = {
-  column: string
-  label: string
-  isOrderedBy: (column: string) => boolean
-  isOrderDesc: () => boolean
-  onClick: (column: string) => void
-}
-
-function SortableHeader(props: SortableHeaderProps) {
-  const { column, label, isOrderedBy, isOrderDesc, onClick } = props
-  return (
-    <th
-      style={{
-        cursor: 'pointer'
-      }}
-      onClick={() => onClick(column)}
-    >
-      {isOrderedBy(column) &&
-        (isOrderDesc() ? (
-          <i className="bi bi-sort-down"></i>
-        ) : (
-          <i className="bi bi-sort-up"></i>
-        ))}{' '}
-      {label}
-    </th>
-  )
-}
-
 function UserList() {
-  type Pagination = {
-    page: number
-    limit: number
-    orderBy: string
-    orderDesc: number
-    // query: string
-  }
-  const [dataLoaded, setDataLoaded] = useState(false)
-  const [items, setItems] = useState([])
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 1,
-    limit: 10,
-    orderBy: 'name',
-    orderDesc: 0
-    // query: ''
-  })
-
-  useEffect(() => {
-    async function loadUsers() {
-      setDataLoaded(false)
-
-      const response = await api.get(USER_LIST_API_ROUTE, {
-        params: pagination
-      })
-      console.log('Load users API response', response)
-      const items = (response?.data?.items || []).map(
-        (g: UserModel) => new UserModel(g)
-      )
-      console.log('Loaded users', items)
-      setItems(items)
-      setDataLoaded(true)
-    }
-
-    loadUsers().catch((error) => {
-      console.log('Error loading users', error)
-      setDataLoaded(true)
-    })
-
-    return () => {
-      setDataLoaded(false)
-    }
-  }, [pagination])
-
-  const isOrderedBy = (column: string) => pagination.orderBy === column
-  const isOrderDesc = () => pagination.orderDesc === 1
-
-  const onColumnHeaderClick = (column: string) => {
-    if (isOrderedBy(column)) {
-      // Toggle sort direction.
-      setPagination({ ...pagination, orderDesc: pagination.orderDesc ? 0 : 1 })
-    } else {
-      // Select as order by.
-      setPagination({ ...pagination, orderBy: column })
-    }
-  }
-
-  const columns: ColumnConfig[] = [
+  const columns: Array<ColumnConfig> = [
     {
-      name: 'display_name',
+      key: 'display_name',
       label: 'Name',
-      sortable: true
+      sortable: true,
+      sortKey: 'name'
     },
     {
-      name: 'email',
+      key: 'email',
       label: 'Email',
       sortable: true
     }
