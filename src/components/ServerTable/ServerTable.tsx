@@ -64,6 +64,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
 
     return () => {
       setDataLoaded(false)
+      setItems([])
     }
   }, [dataUrl, mapper, pagination])
 
@@ -87,7 +88,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
           {columns.map((column) =>
             column.sortable ? (
               <SortableHeader
-                key={column.sortKey}
+                key={column.sortKey || column.key}
                 isOrderDesc={isOrderDesc}
                 isOrderedBy={isOrderedBy}
                 onClick={onColumnHeaderClick}

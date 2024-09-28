@@ -1,6 +1,7 @@
 import { USER_LIST_API_ROUTE } from '@/utils'
 import UserModel from '@/models/UserModel'
 import { ColumnConfig, ServerTable } from '@/components/ServerTable'
+// import { useCallback } from 'react'
 
 function UserList() {
   const columns: Array<ColumnConfig> = [
@@ -17,6 +18,10 @@ function UserList() {
     }
   ]
 
+  // const mapper = useCallback((data: UserModel) => {
+  //   return new UserModel(data)
+  // }, [])
+
   return (
     <div>
       <h1>User List</h1>
@@ -25,6 +30,7 @@ function UserList() {
         dataUrl={USER_LIST_API_ROUTE}
         defaultSortBy={'name'}
         defaultSortDesc={false}
+        // mapper={mapper}
         mapper={(data: UserModel) => new UserModel(data)}
       />
 
