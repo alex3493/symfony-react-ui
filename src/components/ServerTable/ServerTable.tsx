@@ -4,6 +4,7 @@ import Table from 'react-bootstrap/Table'
 import SortableHeader from './SortableHeader'
 import { Loader } from '@/components'
 import ModelBase from '@/models/ModelBase'
+import SearchBox from '@/components/ServerTable/SearchBox'
 
 export type ColumnConfig = {
   key: string
@@ -25,7 +26,7 @@ type Pagination = {
   limit: number
   orderBy: string
   orderDesc: number
-  // query: string
+  query: string
 }
 
 function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
@@ -37,8 +38,8 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     page: 1,
     limit: 10,
     orderBy: defaultSortBy,
-    orderDesc: defaultSortDesc ? 1 : 0
-    // query: ''
+    orderDesc: defaultSortDesc ? 1 : 0,
+    query: ''
   })
 
   useEffect(() => {
@@ -81,46 +82,55 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     }
   }
 
+  const onSearchQueryChange = (query: string) => {
+    console.log('Query string changed', query)
+
+    setPagination({ ...pagination, query })
+  }
+
   return (
-    <Table striped>
-      <thead>
-        <tr>
-          {columns.map((column) =>
-            column.sortable ? (
-              <SortableHeader
-                key={column.sortKey || column.key}
-                isOrderDesc={isOrderDesc}
-                isOrderedBy={isOrderedBy}
-                onClick={onColumnHeaderClick}
-                label={column.label}
-                sortKey={column.sortKey || column.key}
-              />
-            ) : (
-              <th key={column.key}>{column.label}</th>
-            )
-          )}
-        </tr>
-      </thead>
-      <tbody>
-        {items?.length > 0 ? (
-          items.map((item: T) => (
-            <tr key={item.id}>
-              {columns.map((column: ColumnConfig) => (
-                <td key={column.key}>
-                  {item[column.key as keyof typeof item] as string}
-                </td>
-              ))}
-            </tr>
-          ))
-        ) : (
+    <div>
+      <SearchBox onInput={onSearchQueryChange} />
+      <Table striped>
+        <thead>
           <tr>
-            <td colSpan={config.columns.length}>
-              {dataLoaded ? 'No items' : <Loader />}
-            </td>
+            {columns.map((column) =>
+              column.sortable ? (
+                <SortableHeader
+                  key={column.sortKey || column.key}
+                  isOrderDesc={isOrderDesc}
+                  isOrderedBy={isOrderedBy}
+                  onClick={onColumnHeaderClick}
+                  label={column.label}
+                  sortKey={column.sortKey || column.key}
+                />
+              ) : (
+                <th key={column.key}>{column.label}</th>
+              )
+            )}
           </tr>
-        )}
-      </tbody>
-    </Table>
+        </thead>
+        <tbody>
+          {items?.length > 0 ? (
+            items.map((item: T) => (
+              <tr key={item.id}>
+                {columns.map((column: ColumnConfig) => (
+                  <td key={column.key}>
+                    {item[column.key as keyof typeof item] as string}
+                  </td>
+                ))}
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={config.columns.length}>
+                {dataLoaded ? 'No items' : <Loader />}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </Table>
+    </div>
   )
 }
 
