@@ -57,7 +57,7 @@ function ForgotPassword() {
             </Card.Text>
             <Form>
               <Form.Group className="mb-3" controlId="current_password">
-                <Form.Label>Email</Form.Label>
+                <Form.Label column="sm">Email</Form.Label>
                 <ValidatedControl
                   name="email"
                   context="User"

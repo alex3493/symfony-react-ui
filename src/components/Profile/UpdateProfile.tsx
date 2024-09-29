@@ -46,7 +46,7 @@ function UpdateProfile() {
         <Card.Body>
           <Form>
             <Form.Group className="mb-3">
-              <Form.Label>Email</Form.Label>
+              <Form.Label column="sm">Email</Form.Label>
               <Form.Control
                 type="text"
                 id="email"
@@ -55,7 +55,7 @@ function UpdateProfile() {
               />
             </Form.Group>
             <Form.Group className="mb-3" controlId="first_name">
-              <Form.Label>First Name</Form.Label>
+              <Form.Label column="sm">First Name</Form.Label>
               <ValidatedControl
                 name="first_name"
                 validationName="firstName"
@@ -72,7 +72,7 @@ function UpdateProfile() {
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="last_name">
-              <Form.Label>Last name</Form.Label>
+              <Form.Label column="sm">Last name</Form.Label>
               <ValidatedControl
                 name="last_name"
                 validationName="lastName"

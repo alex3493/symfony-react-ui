@@ -53,7 +53,7 @@ function Register() {
         <Card.Body>
           <Form>
             <Form.Group className="mb-3">
-              <Form.Label>Email address</Form.Label>
+              <Form.Label column="sm">Email address</Form.Label>
               <ValidatedControl
                 name="email"
                 context="User"
@@ -68,7 +68,7 @@ function Register() {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Password</Form.Label>
+              <Form.Label column="sm">Password</Form.Label>
               <ValidatedControl
                 name="password"
                 context="User"
@@ -83,7 +83,7 @@ function Register() {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Confirm Password</Form.Label>
+              <Form.Label column="sm">Confirm Password</Form.Label>
               <ValidatedControl
                 name="password_confirmation"
                 validationName="passwordConfirmation"
@@ -99,7 +99,7 @@ function Register() {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>First Name</Form.Label>
+              <Form.Label column="sm">First Name</Form.Label>
               <ValidatedControl
                 name="first_name"
                 validationName="firstName"
@@ -115,7 +115,7 @@ function Register() {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Last name</Form.Label>
+              <Form.Label column="sm">Last name</Form.Label>
               <ValidatedControl
                 name="last_name"
                 validationName="lastName"

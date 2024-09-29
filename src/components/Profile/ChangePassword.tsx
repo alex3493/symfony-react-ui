@@ -46,7 +46,7 @@ function ChangePassword() {
         <Card.Body>
           <Form>
             <Form.Group className="mb-3" controlId="current_password">
-              <Form.Label>Current Password</Form.Label>
+              <Form.Label column="sm">Current Password</Form.Label>
               <ValidatedControl
                 name="current_password"
                 validationName="currentPassword"
@@ -62,7 +62,7 @@ function ChangePassword() {
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="new_password">
-              <Form.Label>New Password</Form.Label>
+              <Form.Label column="sm">New Password</Form.Label>
               <ValidatedControl
                 name="password"
                 context="User"
@@ -77,7 +77,7 @@ function ChangePassword() {
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="password_confirmation">
-              <Form.Label>Confirm Password</Form.Label>
+              <Form.Label column="sm">Confirm Password</Form.Label>
               <ValidatedControl
                 name="password_confirmation"
                 validationName="passwordConfirmation"
