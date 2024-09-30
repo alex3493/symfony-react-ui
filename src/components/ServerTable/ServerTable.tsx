@@ -12,6 +12,7 @@ export type ColumnConfig = {
   label: string
   sortable: boolean
   sortKey?: string
+  render?: (value: unknown) => string
 }
 
 interface TableConfig<T> {
@@ -42,7 +43,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   const [items, setItems] = useState([])
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
-    limit: 2,
+    limit: 10,
     orderBy: defaultSortBy,
     orderDesc: defaultSortDesc ? 1 : 0,
     query: ''
@@ -60,14 +61,21 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         params: pagination
       })
       console.log('Load users API response', response)
-      const items = (response?.data?.items || []).map((data: T) => {
+      const responseItems = (response?.data?.items || []).map((data: T) => {
         return mapper(data)
       })
       const totalItems = response.data.totalItems
       const totalPages = response.data.totalPages
-      console.log('Loaded users', items, totalItems, totalPages)
+      console.log(
+        'Loaded items',
+        responseItems,
+        'Total items',
+        totalItems,
+        'Total pages',
+        totalPages
+      )
 
-      setItems(items)
+      setItems(responseItems)
       setPaginationTotals({ totalItems, totalPages })
       setDataLoaded(true)
     }
@@ -79,7 +87,6 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
 
     return () => {
       setDataLoaded(false)
-      setItems([])
     }
   }, [dataUrl, mapper, pagination])
 
@@ -87,6 +94,12 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   const isOrderDesc = () => pagination.orderDesc === 1
 
   const onColumnHeaderClick = (sortKey: string) => {
+    console.log(
+      'Sort order changes',
+      sortKey,
+      isOrderedBy(sortKey) ? (isOrderDesc() ? 'asc' : 'desc') : 'new order'
+    )
+
     if (isOrderedBy(sortKey)) {
       // Toggle sort direction.
       setPagination({ ...pagination, orderDesc: pagination.orderDesc ? 0 : 1 })
@@ -106,6 +119,16 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     console.log('Page changed', page)
 
     setPagination({ ...pagination, page })
+  }
+
+  const renderFallback = (value: unknown): string => {
+    if (value instanceof Date) {
+      return value.toLocaleString()
+    }
+    if (value instanceof Object) {
+      return ''
+    }
+    return value as string
   }
 
   return (
@@ -136,7 +159,9 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
               <tr key={item.id}>
                 {columns.map((column: ColumnConfig) => (
                   <td key={column.key}>
-                    {item[column.key as keyof typeof item] as string}
+                    {column.render
+                      ? column.render(item[column.key as keyof typeof item])
+                      : renderFallback(item[column.key as keyof typeof item])}
                   </td>
                 ))}
               </tr>
@@ -156,6 +181,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         perPage={pagination.limit}
         totalItems={paginationTotals.totalItems}
         onPageClick={onPageChange}
+        dataLoaded={dataLoaded}
       />
     </div>
   )

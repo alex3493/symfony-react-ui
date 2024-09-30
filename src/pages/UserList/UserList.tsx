@@ -1,6 +1,7 @@
 import { USER_LIST_API_ROUTE } from '@/utils'
 import UserModel from '@/models/UserModel'
 import { ColumnConfig, ServerTable } from '@/components/ServerTable'
+
 // import { useCallback } from 'react'
 
 function UserList() {
@@ -15,6 +16,30 @@ function UserList() {
       key: 'email',
       label: 'Email',
       sortable: true
+    },
+    {
+      key: 'created_at',
+      label: 'Created',
+      sortable: true,
+      sortKey: 'createdAt',
+      render: (value: unknown) => {
+        if (value instanceof Date) {
+          return value.toLocaleDateString('es')
+        }
+        return ''
+      }
+    },
+    {
+      key: 'updated_at',
+      label: 'Updated',
+      sortable: true,
+      sortKey: 'updatedAt',
+      render: (value: unknown) => {
+        if (value instanceof Date) {
+          return value.toLocaleDateString('es')
+        }
+        return ''
+      }
     }
   ]
 

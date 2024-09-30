@@ -6,15 +6,23 @@ type Props = {
   perPage: number
   totalItems: number
   onPageClick: (index: number) => void
+  dataLoaded: boolean
 }
 
 function TableFooter(props: Props) {
-  const { currentPage, totalPages, perPage, totalItems, onPageClick } = props
+  const {
+    currentPage,
+    totalPages,
+    perPage,
+    totalItems,
+    onPageClick,
+    dataLoaded
+  } = props
 
   const firstItemIndex = () => (currentPage - 1) * perPage + 1
   const lastItemIndex = () => {
     if (totalItems < perPage) return totalItems
-    return currentPage * perPage
+    return Math.min(totalItems, currentPage * perPage)
   }
 
   const pageClicked = (index: number) => {
@@ -39,11 +47,11 @@ function TableFooter(props: Props) {
     />
   )
   if (currentPage >= 4) {
-    paginationItems.push(<Pagination.Ellipsis />)
+    paginationItems.push(<Pagination.Ellipsis disabled />)
   }
   for (
-    let index = Math.max(currentPage - 3, 1);
-    index <= Math.min(currentPage + 3, totalPages);
+    let index = Math.max(currentPage - 2, 1);
+    index <= Math.min(currentPage + 2, totalPages);
     index++
   ) {
     paginationItems.push(
@@ -57,22 +65,9 @@ function TableFooter(props: Props) {
       </Pagination.Item>
     )
   }
-  if (totalPages - currentPage >= 4) {
-    paginationItems.push(<Pagination.Ellipsis />)
+  if (totalPages - currentPage >= 3) {
+    paginationItems.push(<Pagination.Ellipsis disabled />)
   }
-  // TODO: Limit page links count, show only close indices and ... for the rest.
-  // for (let index = 1; index <= totalPages; index++) {
-  //   paginationItems.push(
-  //     <Pagination.Item
-  //       style={{ cursor: 'pointer' }}
-  //       key={index}
-  //       active={index === currentPage}
-  //       onClick={() => pageClicked(index)}
-  //     >
-  //       {index}
-  //     </Pagination.Item>
-  //   )
-  // }
   paginationItems.push(
     <Pagination.Next
       disabled={currentPage === totalPages}
@@ -92,7 +87,7 @@ function TableFooter(props: Props) {
     <div>
       {totalItems > 0 && (
         <>
-          <p>
+          <p style={{ visibility: dataLoaded ? 'visible' : 'hidden' }}>
             Showing items {firstItemIndex()} - {lastItemIndex()} of {totalItems}
           </p>
           <Pagination>{paginationItems}</Pagination>
