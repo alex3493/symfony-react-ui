@@ -26,7 +26,8 @@ function UserList() {
         if (value instanceof Date) {
           return value.toLocaleDateString('es')
         }
-        return ''
+        // Should never be the case.
+        return value as string
       }
     },
     {
@@ -38,7 +39,8 @@ function UserList() {
         if (value instanceof Date) {
           return value.toLocaleDateString('es')
         }
-        return ''
+        // Should never be the case.
+        return value as string
       }
     }
   ]
