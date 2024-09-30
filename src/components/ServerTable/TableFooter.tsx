@@ -38,8 +38,14 @@ function TableFooter(props: Props) {
       onClick={() => pageClicked(currentPage - 1)}
     />
   )
-  // TODO: Limit page links count, show only close indices and ... for the rest.
-  for (let index = 1; index <= totalPages; index++) {
+  if (currentPage >= 4) {
+    paginationItems.push(<Pagination.Ellipsis />)
+  }
+  for (
+    let index = Math.max(currentPage - 3, 1);
+    index <= Math.min(currentPage + 3, totalPages);
+    index++
+  ) {
     paginationItems.push(
       <Pagination.Item
         style={{ cursor: 'pointer' }}
@@ -51,6 +57,22 @@ function TableFooter(props: Props) {
       </Pagination.Item>
     )
   }
+  if (totalPages - currentPage >= 4) {
+    paginationItems.push(<Pagination.Ellipsis />)
+  }
+  // TODO: Limit page links count, show only close indices and ... for the rest.
+  // for (let index = 1; index <= totalPages; index++) {
+  //   paginationItems.push(
+  //     <Pagination.Item
+  //       style={{ cursor: 'pointer' }}
+  //       key={index}
+  //       active={index === currentPage}
+  //       onClick={() => pageClicked(index)}
+  //     >
+  //       {index}
+  //     </Pagination.Item>
+  //   )
+  // }
   paginationItems.push(
     <Pagination.Next
       disabled={currentPage === totalPages}
