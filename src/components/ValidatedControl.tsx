@@ -28,7 +28,11 @@ function ValidatedControl(props: Props) {
       name: name,
       isInvalid: hasErrors(context, validationNameProp),
       onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-        removeErrors(context, validationNameProp)
+        // Only remove errors if they exist for the given field.
+        // Thus, we avoid unnecessary child component re-renders.
+        if (hasErrors(context, validationNameProp)) {
+          removeErrors(context, validationNameProp)
+        }
         onInput(e.target.value, e.target.name)
       }
     })

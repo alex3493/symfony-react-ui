@@ -1,7 +1,6 @@
 import { USER_LIST_API_ROUTE, USER_UPDATE_API_ROUTE } from '@/utils'
 import UserModel from '@/models/UserModel'
 import { ColumnConfig, ServerTable } from '@/components/ServerTable'
-
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { RowAction } from '@/components/ServerTable/ServerTable'
 import { Button, Modal } from 'react-bootstrap'
@@ -12,6 +11,9 @@ import ActionButton from '@/components/ActionButton'
 import { api } from '@/services'
 
 function UserList() {
+  // TODO: just testing render performance.
+  console.log('User list rendered')
+
   const columns: ColumnConfig[] = [
     {
       key: 'display_name',
