@@ -1,7 +1,7 @@
 import UserModel from '@/models/UserModel'
 import { Form } from 'react-bootstrap'
 import ValidatedControl from '@/components/ValidatedControl'
-import { forwardRef, useImperativeHandle, useState } from 'react'
+import { forwardRef, useImperativeHandle, useState } from 'react' // TODO: Add support for user create action.
 
 // TODO: Add support for user create action.
 
@@ -43,6 +43,7 @@ const EditUser = forwardRef(function EditUser(props: Props, ref) {
   }, [values])
 
   function handleChange(value: string, name: string) {
+    console.log('Field change', name, value)
     setValues({
       ...values,
       [name]: value
@@ -83,7 +84,6 @@ const EditUser = forwardRef(function EditUser(props: Props, ref) {
             />
           </ValidatedControl>
         </Form.Group>
-
         <Form.Group className="mb-3" controlId="last_name">
           <Form.Label column="sm">Last name</Form.Label>
           <ValidatedControl
@@ -100,7 +100,6 @@ const EditUser = forwardRef(function EditUser(props: Props, ref) {
             />
           </ValidatedControl>
         </Form.Group>
-
         <Form.Group className="mb-3" controlId="password">
           <Form.Label column="sm">Password</Form.Label>
           <ValidatedControl
@@ -116,7 +115,16 @@ const EditUser = forwardRef(function EditUser(props: Props, ref) {
               autoComplete="new-password"
             />
           </ValidatedControl>
-          {/*TODO: add role selector here... */}
+        </Form.Group>
+        <Form.Group className="mb-3" controlId="role">
+          <Form.Label column="sm">Role</Form.Label>
+          <Form.Select
+            value={values.role}
+            onChange={(e) => handleChange(e.target.value, 'role')}
+          >
+            <option value="ROLE_ADMIN">Admin</option>
+            <option value="ROLE_USER">User</option>
+          </Form.Select>
         </Form.Group>
       </Form>
     </div>
