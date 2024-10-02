@@ -15,3 +15,5 @@ export const LOGOUT_FROM_DEVICE_API_ROUTE = '/account/logout/{tokenId}'
 export const LOGOUT_FROM_ALL_DEVICES_API_ROUTE = '/account/me/sign-out'
 
 export const USER_LIST_API_ROUTE = '/admin/users'
+export const USER_CREATE_API_ROUTE = '/admin/users'
+export const USER_UPDATE_API_ROUTE = '/admin/user/{userId}'

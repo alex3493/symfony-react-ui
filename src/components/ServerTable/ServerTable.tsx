@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import { api } from '@/services'
 import Table from 'react-bootstrap/Table'
 import SortableHeader from './SortableHeader'
-import { Loader } from '@/components'
+import { CanAccess, Loader } from '@/components'
 import ModelBase from '@/models/ModelBase'
 import SearchBox from '@/components/ServerTable/SearchBox'
 import TableFooter from '@/components/ServerTable/TableFooter'
+import { useSession } from '@/hooks'
 
 export type ColumnConfig = {
   key: string
@@ -15,12 +16,21 @@ export type ColumnConfig = {
   render?: (value: unknown) => string
 }
 
+export interface RowAction<T> {
+  key: string
+  label: string
+  icon?: string | undefined
+  permissions?: string[]
+  callback: (item: T) => void
+}
+
 interface TableConfig<T> {
   mapper: (data: T) => T
   columns: ColumnConfig[]
   dataUrl: string
   defaultSortBy: string
   defaultSortDesc: boolean
+  rowActions: RowAction<T>[]
 }
 
 type Pagination = {
@@ -37,7 +47,14 @@ type PaginationTotals = {
 }
 
 function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
-  const { mapper, columns, dataUrl, defaultSortBy, defaultSortDesc } = config
+  const {
+    mapper,
+    columns,
+    dataUrl,
+    defaultSortBy,
+    defaultSortDesc,
+    rowActions
+  } = config
 
   const [dataLoaded, setDataLoaded] = useState(false)
   const [items, setItems] = useState([])
@@ -52,6 +69,8 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     totalItems: 0,
     totalPages: 1
   })
+
+  const { user } = useSession()
 
   useEffect(() => {
     async function loadItems() {
@@ -151,6 +170,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
                 <th key={column.key}>{column.label}</th>
               )
             )}
+            <th key="actions">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -164,6 +184,24 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
                       : renderFallback(item[column.key as keyof typeof item])}
                   </td>
                 ))}
+                <td>
+                  {rowActions.map((action: RowAction<T>) => (
+                    <CanAccess
+                      key={action.key}
+                      entity={item}
+                      roles={user?.roles}
+                      permissions={['user.update']}
+                    >
+                      <a
+                        style={{ marginRight: 5 }}
+                        href="#"
+                        onClick={() => action.callback(item)}
+                      >
+                        {action.label}
+                      </a>
+                    </CanAccess>
+                  ))}
+                </td>
               </tr>
             ))
           ) : (
