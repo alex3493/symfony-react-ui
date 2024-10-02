@@ -2,13 +2,14 @@ import { USER_LIST_API_ROUTE, USER_UPDATE_API_ROUTE } from '@/utils'
 import UserModel from '@/models/UserModel'
 import { ColumnConfig, ServerTable } from '@/components/ServerTable'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { RowAction } from '@/components/ServerTable/ServerTable'
-import { Modal } from 'react-bootstrap'
+import { Button, Modal } from 'react-bootstrap'
 import { EditUser } from '@/pages/EditUser'
-import { UserUpdateForm } from '@/pages/EditUser/EditUser'
+import { UserFromDataHandler } from '@/pages/EditUser/EditUser'
 import { api } from '@/services'
 import { useApiValidation } from '@/hooks'
+import ActionButton from '@/components/ActionButton'
 
 function UserList() {
   const columns: ColumnConfig[] = [
@@ -92,29 +93,35 @@ function UserList() {
     setUserToEdit(undefined)
   }
 
-  const userUpdateSubmit = async (form: UserUpdateForm) => {
-    console.log('Updated user form', form)
+  const ref = useRef<UserFromDataHandler>(null)
 
-    const userUpdateRoute = () =>
-      USER_UPDATE_API_ROUTE.replace(
-        '{userId}',
-        userToEdit ? userToEdit.id.toString() : ''
-      )
+  const userUpdateRoute = useMemo(() => {
+    console.log('userUpdateRoute getter', userToEdit?.id)
+    return USER_UPDATE_API_ROUTE.replace(
+      '{userId}',
+      userToEdit ? userToEdit.id.toString() : ''
+    )
+  }, [userToEdit])
 
-    try {
-      await api.patch(userUpdateRoute(), form)
-      closeUserEditModal()
-    } catch (error) {
-      /**
-       * an error handler can be added here
-       */
+  const userUpdateSubmit = async () => {
+    const data = ref.current?.getFormData()
+
+    if (data && userToEdit) {
+      console.log('Update user request', data, userToEdit.id)
+
+      // const userUpdateRoute = () =>
+      //   USER_UPDATE_API_ROUTE.replace('{userId}', userToEdit.id.toString())
+
+      try {
+        await api.patch(userUpdateRoute, data)
+        closeUserEditModal()
+      } catch (error) {
+        /**
+         * an error handler can be added here
+         */
+      }
     }
   }
-
-  // const testUpdateSubmit = async () => {
-  //   // TODO: Is there a way to read EditUser state here?
-  //   console.log('testUpdateSubmit')
-  // }
 
   return (
     <div>
@@ -130,20 +137,19 @@ function UserList() {
       <Modal show={modalOpen} onHide={closeUserEditModal}>
         <Modal.Header closeButton>Edit User</Modal.Header>
         <Modal.Body>
-          <EditUser
-            user={userToEdit}
-            submitCallback={userUpdateSubmit}
-            cancelCallback={closeUserEditModal}
-          />
+          <EditUser ref={ref} user={userToEdit} />
         </Modal.Body>
-        {/*<Modal.Footer>
+        <Modal.Footer>
           <Button variant="secondary" onClick={closeUserEditModal}>
-            Close
+            Cancel
           </Button>
-          <Button variant="primary" onClick={() => testUpdateSubmit()}>
-            Save
-          </Button>
-        </Modal.Footer>*/}
+          <ActionButton
+            label="Save"
+            onClick={() => userUpdateSubmit()}
+            route={userUpdateRoute}
+            variant="primary"
+          />
+        </Modal.Footer>
       </Modal>
     </div>
   )

@@ -1,17 +1,12 @@
 import UserModel from '@/models/UserModel'
-import { Button, Form } from 'react-bootstrap'
+import { Form } from 'react-bootstrap'
 import ValidatedControl from '@/components/ValidatedControl'
-import React, { useState } from 'react'
-import ActionButton from '@/components/ActionButton'
-
-import { USER_UPDATE_API_ROUTE, USER_CREATE_API_ROUTE } from '@/utils'
+import { forwardRef, useImperativeHandle, useState } from 'react'
 
 // TODO: Add support for user create action.
 
 type Props = {
   user: UserModel | undefined
-  submitCallback: (form: UserUpdateForm) => void
-  cancelCallback: () => void
 }
 
 export type UserUpdateForm = {
@@ -21,8 +16,12 @@ export type UserUpdateForm = {
   last_name: string
 }
 
-function EditUser(props: Props) {
-  const { user, submitCallback, cancelCallback } = props
+export interface UserFromDataHandler {
+  getFormData: () => UserUpdateForm
+}
+
+const EditUser = forwardRef(function EditUser(props: Props, ref) {
+  const { user } = props
 
   const [values, setValues] = useState<UserUpdateForm>({
     email: user?.email || '',
@@ -31,19 +30,19 @@ function EditUser(props: Props) {
     last_name: user?.last_name || ''
   })
 
+  useImperativeHandle(ref, () => {
+    return {
+      getFormData() {
+        return values
+      }
+    }
+  }, [values])
+
   function handleChange(value: string, name: string) {
     setValues({
       ...values,
       [name]: value
     })
-  }
-
-  const userUpdateRoute = () => {
-    console.log('userUpdateRoute getter', user?.id)
-    return USER_UPDATE_API_ROUTE.replace(
-      '{userId}',
-      user ? user.id.toString() : ''
-    )
   }
 
   return (
@@ -114,19 +113,9 @@ function EditUser(props: Props) {
             />
           </ValidatedControl>
         </Form.Group>
-        <ActionButton
-          label="Save"
-          onClick={() => submitCallback(values)}
-          route={userUpdateRoute()}
-          variant="primary"
-          style={{ marginRight: 10 }}
-        />
-        <Button variant="secondary" onClick={cancelCallback}>
-          Close
-        </Button>
       </Form>
     </div>
   )
-}
+})
 
 export default EditUser
