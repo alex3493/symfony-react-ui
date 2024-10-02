@@ -5,6 +5,8 @@ import { forwardRef, useImperativeHandle, useState } from 'react'
 
 // TODO: Add support for user create action.
 
+// TODO: Add user role select control!
+
 type Props = {
   user: UserModel | undefined
 }
@@ -14,6 +16,7 @@ export type UserUpdateForm = {
   password?: string
   first_name: string
   last_name: string
+  role: string
 }
 
 export interface UserFromDataHandler {
@@ -27,7 +30,8 @@ const EditUser = forwardRef(function EditUser(props: Props, ref) {
     email: user?.email || '',
     password: '',
     first_name: user?.first_name || '',
-    last_name: user?.last_name || ''
+    last_name: user?.last_name || '',
+    role: user?.role || 'ROLE_USER'
   })
 
   useImperativeHandle(ref, () => {
@@ -112,6 +116,7 @@ const EditUser = forwardRef(function EditUser(props: Props, ref) {
               autoComplete="new-password"
             />
           </ValidatedControl>
+          {/*TODO: add role selector here... */}
         </Form.Group>
       </Form>
     </div>

@@ -7,9 +7,9 @@ import { RowAction } from '@/components/ServerTable/ServerTable'
 import { Button, Modal } from 'react-bootstrap'
 import { EditUser } from '@/pages/EditUser'
 import { UserFromDataHandler } from '@/pages/EditUser/EditUser'
-import { api } from '@/services'
 import { useApiValidation } from '@/hooks'
 import ActionButton from '@/components/ActionButton'
+import { api } from '@/services'
 
 function UserList() {
   const columns: ColumnConfig[] = [
@@ -108,9 +108,6 @@ function UserList() {
 
     if (data && userToEdit) {
       console.log('Update user request', data, userToEdit.id)
-
-      // const userUpdateRoute = () =>
-      //   USER_UPDATE_API_ROUTE.replace('{userId}', userToEdit.id.toString())
 
       try {
         await api.patch(userUpdateRoute, data)
