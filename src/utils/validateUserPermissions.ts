@@ -19,6 +19,7 @@ export function validateUserPermissions(params: Params) {
       ? ['user.list', 'user.update']
       : ['user.list']
 
+    // Admins can create users.
     if (user?.roles.includes('ROLE_ADMIN')) {
       userPermissions.push('user.create')
     }
