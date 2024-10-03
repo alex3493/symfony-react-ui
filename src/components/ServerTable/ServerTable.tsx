@@ -31,6 +31,7 @@ interface TableConfig<T> {
   defaultSortBy: string
   defaultSortDesc: boolean
   rowActions: RowAction<T>[]
+  version: string
 }
 
 type Pagination = {
@@ -53,7 +54,8 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     dataUrl,
     defaultSortBy,
     defaultSortDesc,
-    rowActions
+    rowActions,
+    version
   } = config
 
   const [dataLoaded, setDataLoaded] = useState(false)
@@ -69,7 +71,6 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     totalItems: 0,
     totalPages: 1
   })
-
   const { user } = useSession()
 
   useEffect(() => {
@@ -107,7 +108,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     return () => {
       setDataLoaded(false)
     }
-  }, [dataUrl, mapper, pagination])
+  }, [dataUrl, mapper, pagination, version])
 
   const isOrderedBy = (sortKey: string) => pagination.orderBy === sortKey
   const isOrderDesc = () => pagination.orderDesc === 1

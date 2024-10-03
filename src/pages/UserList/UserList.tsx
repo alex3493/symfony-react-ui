@@ -101,6 +101,9 @@ function UserList() {
 
   const ref = useRef<UserFromDataHandler>(null)
 
+  const randomVersion = () => (Math.random() + 1).toString(36).substring(7)
+  const [dataVersion, setDataVersion] = useState<string>(randomVersion())
+
   const userSaveRoute = userToEdit
     ? USER_UPDATE_API_ROUTE.replace('{userId}', userToEdit.id.toString())
     : USER_CREATE_API_ROUTE
@@ -116,6 +119,8 @@ function UserList() {
         try {
           await api.patch(userSaveRoute, data)
           closeUserEditModal()
+
+          setDataVersion(randomVersion())
         } catch (error) {
           /**
            * an error handler can be added here
@@ -125,6 +130,8 @@ function UserList() {
         try {
           await api.post(USER_CREATE_API_ROUTE, data)
           closeUserEditModal()
+
+          setDataVersion(randomVersion())
         } catch (error) {
           /**
            * an error handler can be added here
@@ -147,6 +154,7 @@ function UserList() {
         defaultSortDesc={false}
         mapper={mapper}
         rowActions={rowActions}
+        version={dataVersion}
       />
       <Modal show={modalOpen} onHide={closeUserEditModal}>
         <Modal.Header closeButton>Edit User</Modal.Header>
