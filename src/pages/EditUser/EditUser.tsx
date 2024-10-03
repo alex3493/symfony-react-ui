@@ -1,7 +1,7 @@
 import UserModel from '@/models/UserModel'
 import { Form } from 'react-bootstrap'
 import ValidatedControl from '@/components/ValidatedControl'
-import React, { forwardRef, useImperativeHandle, useState } from 'react' // TODO: Add support for user create action.
+import { forwardRef, useImperativeHandle, useState } from 'react' // TODO: Add support for user create action.
 
 // TODO: Add support for user create action.
 
@@ -41,7 +41,6 @@ const EditUser = forwardRef(function EditUser(props: Props, ref) {
   }, [values])
 
   function handleChange(value: string, name: string) {
-    console.log('Field change', name, value)
     setValues({
       ...values,
       [name]: value

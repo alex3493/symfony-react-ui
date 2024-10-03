@@ -1,7 +1,7 @@
 import { USER_LIST_API_ROUTE, USER_UPDATE_API_ROUTE } from '@/utils'
 import UserModel from '@/models/UserModel'
 import { ColumnConfig, ServerTable } from '@/components/ServerTable'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { RowAction } from '@/components/ServerTable/ServerTable'
 import { Button, Modal } from 'react-bootstrap'
 import { EditUser } from '@/pages/EditUser'
@@ -97,13 +97,11 @@ function UserList() {
 
   const ref = useRef<UserFromDataHandler>(null)
 
-  const userUpdateRoute = useMemo(() => {
-    console.log('userUpdateRoute getter', userToEdit?.id)
-    return USER_UPDATE_API_ROUTE.replace(
-      '{userId}',
-      userToEdit ? userToEdit.id.toString() : ''
-    )
-  }, [userToEdit])
+  console.log('Setting user update route', userToEdit?.id)
+  const userUpdateRoute = USER_UPDATE_API_ROUTE.replace(
+    '{userId}',
+    userToEdit ? userToEdit.id.toString() : ''
+  )
 
   const userUpdateSubmit = async () => {
     const data = ref.current?.getFormData()
