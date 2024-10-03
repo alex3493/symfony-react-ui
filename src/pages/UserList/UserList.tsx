@@ -1,5 +1,6 @@
 import {
   USER_CREATE_API_ROUTE,
+  USER_DELETE_API_ROUTE,
   USER_LIST_API_ROUTE,
   USER_UPDATE_API_ROUTE
 } from '@/utils'
@@ -113,9 +114,8 @@ function UserList() {
     : USER_CREATE_API_ROUTE
   console.log('Setting user save route', userSaveRoute)
 
-  const userDeleteRoute = (id: string) =>
-    USER_UPDATE_API_ROUTE.replace('{userId}', id)
-  console.log('Setting user delete route', userSaveRoute)
+  const userDeleteRoute = (id: string | number) =>
+    USER_DELETE_API_ROUTE.replace('{userId}', id.toString())
 
   const userSaveSubmit = async () => {
     const data = ref.current?.getFormData()
@@ -153,7 +153,7 @@ function UserList() {
 
   const userDelete = async (user: UserModel) => {
     try {
-      await api.delete(userDeleteRoute(user.id.toString()))
+      await api.delete(userDeleteRoute(user.id))
 
       setDataVersion(randomVersion())
     } catch (error) {
