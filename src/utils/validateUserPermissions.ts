@@ -16,13 +16,19 @@ export function validateUserPermissions(params: Params) {
 
   if (permissions?.length) {
     const userPermissions = user?.roles.includes('ROLE_ADMIN')
-      ? ['user.list', 'user.update', 'user.delete']
+      ? ['user.list', 'user.update']
       : ['user.list']
 
+    if (user?.roles.includes('ROLE_ADMIN')) {
+      userPermissions.push('user.create')
+    }
+
     if (entity instanceof UserModel) {
-      if (user?.roles.includes('ROLE_ADMIN') || user?.id === entity.id) {
-        userPermissions.push('greeting.update')
-        userPermissions.push('greeting.delete')
+      // Admins can delete and restore users, except self.
+      if (user?.roles.includes('ROLE_ADMIN') && user?.id !== entity.id) {
+        userPermissions.push('user.delete')
+        userPermissions.push('user.soft_delete')
+        userPermissions.push('user.restore')
       }
     }
 

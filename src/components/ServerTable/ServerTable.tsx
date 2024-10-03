@@ -191,15 +191,23 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
                       key={action.key}
                       entity={item}
                       roles={user?.roles}
-                      permissions={['user.update']}
+                      permissions={action.permissions}
                     >
-                      <a
-                        style={{ marginRight: 5 }}
-                        href="#"
-                        onClick={() => action.callback(item)}
-                      >
-                        {action.label}
-                      </a>
+                      {action.icon ? (
+                        <i
+                          className={'bi ' + action.icon}
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => action.callback(item)}
+                        />
+                      ) : (
+                        <a
+                          style={{ marginRight: 5 }}
+                          href="#"
+                          onClick={() => action.callback(item)}
+                        >
+                          {action.label}
+                        </a>
+                      )}{' '}
                     </CanAccess>
                   ))}
                 </td>

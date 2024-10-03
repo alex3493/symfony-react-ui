@@ -13,6 +13,7 @@ import { UserFromDataHandler } from '@/pages/EditUser/EditUser'
 import { useApiValidation } from '@/hooks'
 import ActionButton from '@/components/ActionButton'
 import { api } from '@/services'
+import { CanAccess } from '@/components'
 
 function UserList() {
   // TODO: just testing render performance.
@@ -62,6 +63,7 @@ function UserList() {
     {
       key: 'user.edit',
       label: 'Edit',
+      icon: 'bi-pencil',
       permissions: ['user.update'],
       callback: function (item: UserModel): void {
         console.log('Edit action callback', item)
@@ -71,9 +73,11 @@ function UserList() {
     {
       key: 'user.delete',
       label: 'Delete',
+      icon: 'bi-trash',
       permissions: ['user.delete'],
       callback: function (item: UserModel): void {
         console.log('Delete action callback', item)
+        userDelete(item).then(() => console.log('User deleted'))
       }
     }
   ]
@@ -109,6 +113,10 @@ function UserList() {
     : USER_CREATE_API_ROUTE
   console.log('Setting user save route', userSaveRoute)
 
+  const userDeleteRoute = (id: string) =>
+    USER_UPDATE_API_ROUTE.replace('{userId}', id)
+  console.log('Setting user delete route', userSaveRoute)
+
   const userSaveSubmit = async () => {
     const data = ref.current?.getFormData()
 
@@ -127,6 +135,8 @@ function UserList() {
            */
         }
       } else {
+        console.log('Create user request', data)
+
         try {
           await api.post(USER_CREATE_API_ROUTE, data)
           closeUserEditModal()
@@ -141,12 +151,26 @@ function UserList() {
     }
   }
 
+  const userDelete = async (user: UserModel) => {
+    try {
+      await api.delete(userDeleteRoute(user.id.toString()))
+
+      setDataVersion(randomVersion())
+    } catch (error) {
+      /**
+       * an error handler can be added here
+       */
+    }
+  }
+
   return (
     <div>
       <h1>User List</h1>
-      <Button onClick={() => openUserEditModal()} className={'mb-2'}>
-        Create
-      </Button>
+      <CanAccess permissions={['user.create']}>
+        <Button onClick={() => openUserEditModal()} className={'mb-2'}>
+          Create
+        </Button>
+      </CanAccess>
       <ServerTable<UserModel>
         columns={columns}
         dataUrl={USER_LIST_API_ROUTE}
