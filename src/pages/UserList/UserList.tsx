@@ -1,4 +1,8 @@
-import { USER_LIST_API_ROUTE, USER_UPDATE_API_ROUTE } from '@/utils'
+import {
+  USER_CREATE_API_ROUTE,
+  USER_LIST_API_ROUTE,
+  USER_UPDATE_API_ROUTE
+} from '@/utils'
 import UserModel from '@/models/UserModel'
 import { ColumnConfig, ServerTable } from '@/components/ServerTable'
 import { useCallback, useRef, useState } from 'react'
@@ -83,7 +87,7 @@ function UserList() {
 
   const { removeErrors } = useApiValidation()
 
-  const openUserEditModal = (item: UserModel) => {
+  const openUserEditModal = (item?: UserModel) => {
     setUserToEdit(item)
     removeErrors('User')
     setModalOpen(true)
@@ -97,25 +101,35 @@ function UserList() {
 
   const ref = useRef<UserFromDataHandler>(null)
 
-  console.log('Setting user update route', userToEdit?.id)
-  const userUpdateRoute = USER_UPDATE_API_ROUTE.replace(
-    '{userId}',
-    userToEdit ? userToEdit.id.toString() : ''
-  )
+  const userSaveRoute = userToEdit
+    ? USER_UPDATE_API_ROUTE.replace('{userId}', userToEdit.id.toString())
+    : USER_CREATE_API_ROUTE
+  console.log('Setting user save route', userSaveRoute)
 
-  const userUpdateSubmit = async () => {
+  const userSaveSubmit = async () => {
     const data = ref.current?.getFormData()
 
-    if (data && userToEdit) {
-      console.log('Update user request', data, userToEdit.id)
+    if (data) {
+      if (userToEdit) {
+        console.log('Update user request', data, userToEdit.id)
 
-      try {
-        await api.patch(userUpdateRoute, data)
-        closeUserEditModal()
-      } catch (error) {
-        /**
-         * an error handler can be added here
-         */
+        try {
+          await api.patch(userSaveRoute, data)
+          closeUserEditModal()
+        } catch (error) {
+          /**
+           * an error handler can be added here
+           */
+        }
+      } else {
+        try {
+          await api.post(USER_CREATE_API_ROUTE, data)
+          closeUserEditModal()
+        } catch (error) {
+          /**
+           * an error handler can be added here
+           */
+        }
       }
     }
   }
@@ -123,6 +137,9 @@ function UserList() {
   return (
     <div>
       <h1>User List</h1>
+      <Button onClick={() => openUserEditModal()} className={'mb-2'}>
+        Create
+      </Button>
       <ServerTable<UserModel>
         columns={columns}
         dataUrl={USER_LIST_API_ROUTE}
@@ -142,8 +159,8 @@ function UserList() {
           </Button>
           <ActionButton
             label="Save"
-            onClick={() => userUpdateSubmit()}
-            route={userUpdateRoute}
+            onClick={() => userSaveSubmit()}
+            route={userSaveRoute}
             variant="primary"
           />
         </Modal.Footer>
