@@ -32,6 +32,7 @@ interface TableConfig<T> {
   defaultSortDesc: boolean
   rowActions: RowAction<T>[]
   version: string
+  withDeleted?: boolean
 }
 
 type Pagination = {
@@ -39,6 +40,7 @@ type Pagination = {
   limit: number
   orderBy: string
   orderDesc: number
+  withDeleted: 0 | 1
   query: string
 }
 
@@ -55,7 +57,8 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     defaultSortBy,
     defaultSortDesc,
     rowActions,
-    version
+    version,
+    withDeleted
   } = config
 
   const [dataLoaded, setDataLoaded] = useState(false)
@@ -65,6 +68,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     limit: 10,
     orderBy: defaultSortBy,
     orderDesc: defaultSortDesc ? 1 : 0,
+    withDeleted: withDeleted ? 1 : 0,
     query: ''
   })
   const [paginationTotals, setPaginationTotals] = useState<PaginationTotals>({
@@ -215,7 +219,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
             ))
           ) : (
             <tr>
-              <td colSpan={config.columns.length}>
+              <td colSpan={config.columns.length + 1}>
                 {dataLoaded ? 'No items' : <Loader />}
               </td>
             </tr>

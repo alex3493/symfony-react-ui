@@ -28,8 +28,11 @@ export function validateUserPermissions(params: Params) {
       // Admins can delete and restore users, except self.
       if (user?.roles.includes('ROLE_ADMIN') && user?.id !== entity.id) {
         userPermissions.push('user.delete')
-        userPermissions.push('user.soft_delete')
-        userPermissions.push('user.restore')
+        if (entity.deleted_at) {
+          userPermissions.push('user.restore')
+        } else {
+          userPermissions.push('user.soft_delete')
+        }
       }
     }
 

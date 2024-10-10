@@ -2,6 +2,8 @@ import {
   USER_CREATE_API_ROUTE,
   USER_DELETE_API_ROUTE,
   USER_LIST_API_ROUTE,
+  USER_RESTORE_API_ROUTE,
+  USER_SOFT_DELETE_API_ROUTE,
   USER_UPDATE_API_ROUTE
 } from '@/utils'
 import UserModel from '@/models/UserModel'
@@ -11,7 +13,7 @@ import { RowAction } from '@/components/ServerTable/ServerTable'
 import { Button, Modal } from 'react-bootstrap'
 import { EditUser } from '@/pages/EditUser'
 import { UserFromDataHandler } from '@/pages/EditUser/EditUser'
-import { useApiValidation } from '@/hooks'
+import { useApiValidation, useSession } from '@/hooks'
 import ActionButton from '@/components/ActionButton'
 import { api } from '@/services'
 import { CanAccess } from '@/components'
@@ -80,6 +82,26 @@ function UserList() {
         console.log('Delete action callback', item)
         userDelete(item).then(() => console.log('User deleted'))
       }
+    },
+    {
+      key: 'user.soft-delete',
+      label: 'Disable',
+      icon: 'bi-ban',
+      permissions: ['user.soft_delete'],
+      callback: function (item: UserModel): void {
+        console.log('Soft-delete action callback', item)
+        userSoftDelete(item).then(() => console.log('User deleted'))
+      }
+    },
+    {
+      key: 'user.restore',
+      label: 'Disable',
+      icon: 'bi-check',
+      permissions: ['user.restore'],
+      callback: function (item: UserModel): void {
+        console.log('Restore action callback', item)
+        userRestore(item).then(() => console.log('User deleted'))
+      }
     }
   ]
 
@@ -91,6 +113,8 @@ function UserList() {
   const [userToEdit, setUserToEdit] = useState<UserModel | undefined>(undefined)
 
   const { removeErrors } = useApiValidation()
+
+  const { user } = useSession()
 
   const openUserEditModal = (item?: UserModel) => {
     setUserToEdit(item)
@@ -116,6 +140,12 @@ function UserList() {
 
   const userDeleteRoute = (id: string | number) =>
     USER_DELETE_API_ROUTE.replace('{userId}', id.toString())
+
+  const userSoftDeleteRoute = (id: string | number) =>
+    USER_SOFT_DELETE_API_ROUTE.replace('{userId}', id.toString())
+
+  const userRestoreRoute = (id: string | number) =>
+    USER_RESTORE_API_ROUTE.replace('{userId}', id.toString())
 
   const userSaveSubmit = async () => {
     const data = ref.current?.getFormData()
@@ -163,6 +193,30 @@ function UserList() {
     }
   }
 
+  const userSoftDelete = async (user: UserModel) => {
+    try {
+      await api.patch(userSoftDeleteRoute(user.id))
+
+      setDataVersion(randomVersion())
+    } catch (error) {
+      /**
+       * an error handler can be added here
+       */
+    }
+  }
+
+  const userRestore = async (user: UserModel) => {
+    try {
+      await api.patch(userRestoreRoute(user.id))
+
+      setDataVersion(randomVersion())
+    } catch (error) {
+      /**
+       * an error handler can be added here
+       */
+    }
+  }
+
   return (
     <div>
       <h1>User List</h1>
@@ -176,6 +230,7 @@ function UserList() {
         dataUrl={USER_LIST_API_ROUTE}
         defaultSortBy={'name'}
         defaultSortDesc={false}
+        withDeleted={user?.role === 'ROLE_ADMIN'}
         mapper={mapper}
         rowActions={rowActions}
         version={dataVersion}

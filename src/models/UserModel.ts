@@ -8,6 +8,7 @@ export default class UserModel extends ModelBase {
   display_name: string | undefined
   roles: string[]
   role: string | undefined
+  deleted_at?: Date | undefined
 
   auth_tokens: RegisteredDeviceModel[]
 
@@ -20,6 +21,7 @@ export default class UserModel extends ModelBase {
     this.display_name = user.display_name || undefined
     this.roles = user.roles || []
     this.role = user.role || undefined
+    this.deleted_at = user.deleted_at ? new Date(user.deleted_at) : undefined
     this.auth_tokens = (user.auth_tokens || []).map(
       (d) => new RegisteredDeviceModel(d)
     )
