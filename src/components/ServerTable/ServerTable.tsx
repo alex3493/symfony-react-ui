@@ -84,7 +84,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
       const response = await api.get(dataUrl, {
         params: pagination
       })
-      console.log('Load users API response', response)
+      console.log('Load items API response', response)
       const responseItems = (response?.data?.items || []).map((data: T) => {
         return mapper(data)
       })

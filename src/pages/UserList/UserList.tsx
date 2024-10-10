@@ -86,7 +86,7 @@ function UserList() {
     {
       key: 'user.soft-delete',
       label: 'Disable',
-      icon: 'bi-ban',
+      icon: 'bi-x-circle-fill',
       permissions: ['user.soft_delete'],
       callback: function (item: UserModel): void {
         console.log('Soft-delete action callback', item)
@@ -96,7 +96,7 @@ function UserList() {
     {
       key: 'user.restore',
       label: 'Disable',
-      icon: 'bi-check',
+      icon: 'bi-check-circle-fill',
       permissions: ['user.restore'],
       callback: function (item: UserModel): void {
         console.log('Restore action callback', item)
