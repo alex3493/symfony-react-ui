@@ -50,6 +50,7 @@ const useInterceptorsStore = create<State & Action>((set, getState) => ({
       }
       return state
     }),
+  // TODO: add remove by context, fix remove by index (search for index property in InterceptorData).
   removeRequestInterceptor: (index) =>
     set((state) => {
       state.requestInterceptors.splice(index, 1)

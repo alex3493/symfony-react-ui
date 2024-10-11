@@ -7,7 +7,7 @@ import {
   InternalAxiosRequestConfig
 } from 'axios'
 import { api } from '@/services'
-import useInterceptorsStore from '@/store/LoadingStateStore'
+import { useInterceptorsStore } from '@/store'
 
 type Props = {
   children: ReactNode
