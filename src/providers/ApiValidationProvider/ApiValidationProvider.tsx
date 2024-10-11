@@ -6,6 +6,7 @@ import {
 } from '@/contexts'
 import { api } from '@/services'
 import { AxiosError, AxiosResponse } from 'axios'
+import { useInterceptorsStore } from '@/store'
 
 type Props = {
   children: ReactNode
@@ -111,12 +112,14 @@ function ApiValidationProvider(props: Props) {
     })
   }, [])
 
-  const onResponse = useCallback((response: AxiosResponse) => {
-    return response
-  }, [])
+  const interceptorsStore = useInterceptorsStore()
 
-  const onResponseError = useCallback(
-    (error: AxiosError<ApiValidationData>) => {
+  useEffect(() => {
+    const onResponse = (response: AxiosResponse) => {
+      return response
+    }
+
+    const onResponseError = (error: AxiosError<ApiValidationData>) => {
       const data = error?.response?.data
 
       if (data?.errors) {
@@ -142,20 +145,33 @@ function ApiValidationProvider(props: Props) {
 
       // Rethrow error after we update validation context data.
       throw error
-    },
-    [mergeErrors]
-  )
+    }
+
+    if (!interceptorsStore.hasResponseInterceptor('api-validation')) {
+      console.log(
+        '+++++ ApiValidationProvider :: Attaching response interceptor'
+      )
+      const interceptor = api.interceptors.response.use(
+        onResponse,
+        onResponseError
+      )
+      interceptorsStore.addResponseInterceptor(interceptor, 'api-validation')
+    }
+  }, [interceptorsStore, mergeErrors])
 
   useEffect(() => {
-    const interceptor = api.interceptors.response.use(
-      onResponse,
-      onResponseError
-    )
-
     return () => {
-      api.interceptors.response.eject(interceptor)
+      const interceptor =
+        interceptorsStore.getResponseInterceptor('api-validation')
+      if (interceptor) {
+        console.log(
+          '----- ApiValidationProvider :: Ejecting response interceptor'
+        )
+        api.interceptors.response.eject(interceptor.index)
+      }
+      interceptorsStore.removeResponseInterceptor('api-validation')
     }
-  }, [onResponse, onResponseError])
+  }, [interceptorsStore])
 
   return (
     <ApiValidationContext.Provider

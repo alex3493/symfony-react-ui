@@ -13,10 +13,12 @@ type State = {
 type Action = {
   addRequestInterceptor: (index: number, context: string) => void
   addResponseInterceptor: (index: number, context: string) => void
-  removeRequestInterceptor: (index: number) => void
-  removeResponseInterceptor: (index: number) => void
+  removeRequestInterceptor: (context: string) => void
+  removeResponseInterceptor: (context: string) => void
   hasRequestInterceptor: (context: string) => boolean
   hasResponseInterceptor: (context: string) => boolean
+  getRequestInterceptor: (context: string) => InterceptorData | undefined
+  getResponseInterceptor: (context: string) => InterceptorData | undefined
 }
 
 const requestInterceptorIndex = (state: State, context: string): number => {
@@ -50,15 +52,18 @@ const useInterceptorsStore = create<State & Action>((set, getState) => ({
       }
       return state
     }),
-  // TODO: add remove by context, fix remove by index (search for index property in InterceptorData).
-  removeRequestInterceptor: (index) =>
+  removeRequestInterceptor: (context: string) =>
     set((state) => {
-      state.requestInterceptors.splice(index, 1)
+      const found = requestInterceptorIndex(state, context)
+      if (found >= 0) {
+        state.requestInterceptors.splice(found, 1)
+      }
       return state
     }),
-  removeResponseInterceptor: (index) =>
+  removeResponseInterceptor: (context: string) =>
     set((state) => {
-      state.responseInterceptors.splice(index, 1)
+      const found = responseInterceptorIndex(state, context)
+      state.responseInterceptors.splice(found, 1)
       return state
     }),
   hasRequestInterceptor: (context) => {
@@ -66,6 +71,12 @@ const useInterceptorsStore = create<State & Action>((set, getState) => ({
   },
   hasResponseInterceptor: (context) => {
     return getState().responseInterceptors.some((s) => s.context === context)
+  },
+  getRequestInterceptor: (context: string) => {
+    return getState().requestInterceptors.find((i) => i.context === context)
+  },
+  getResponseInterceptor: (context: string) => {
+    return getState().responseInterceptors.find((i) => i.context === context)
   }
 }))
 

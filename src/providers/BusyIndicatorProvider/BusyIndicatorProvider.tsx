@@ -92,20 +92,6 @@ function BusyIndicatorProvider(props: Props) {
   const interceptorsStore = useInterceptorsStore()
 
   useEffect(() => {
-    console.log('***** Interceptors store', interceptorsStore)
-
-    // const hasRequestInterceptor = (context: string): boolean => {
-    //   return interceptorsStore.requestInterceptors.some(
-    //     (s) => s.context === context
-    //   )
-    // }
-    //
-    // const hasResponseInterceptor = (context: string): boolean => {
-    //   return interceptorsStore.responseInterceptors.some(
-    //     (s) => s.context === context
-    //   )
-    // }
-
     const onRequest = (
       config: InternalAxiosRequestConfig<AxiosRequestConfig>
     ): InternalAxiosRequestConfig<AxiosRequestConfig> => {
@@ -179,7 +165,9 @@ function BusyIndicatorProvider(props: Props) {
     }
 
     if (!interceptorsStore.hasRequestInterceptor('busy-indicator')) {
-      console.log('***** Attaching request interceptor')
+      console.log(
+        '+++++ BusyIndicatorProvider :: Attaching request interceptor'
+      )
       const requestInterceptor = api.interceptors.request.use(
         onRequest,
         onRequestError
@@ -191,7 +179,9 @@ function BusyIndicatorProvider(props: Props) {
     }
 
     if (!interceptorsStore.hasResponseInterceptor('busy-indicator')) {
-      console.log('***** Attaching response interceptor')
+      console.log(
+        '+++++ BusyIndicatorProvider :: Attaching response interceptor'
+      )
       const responseInterceptor = api.interceptors.response.use(
         onResponse,
         onResponseError
@@ -207,13 +197,31 @@ function BusyIndicatorProvider(props: Props) {
       api.interceptors.request,
       api.interceptors.response
     )
-
-    return () => {
-      console.log('***** BusyIndicatorProvider :: clean-up')
-      // api.interceptors.request.eject(requestInterceptor)
-      // api.interceptors.response.eject(responseInterceptor)
-    }
   }, [busyEndpoints, interceptorsStore])
+
+  useEffect(() => {
+    return () => {
+      const requestInterceptor =
+        interceptorsStore.getRequestInterceptor('busy-indicator')
+      if (requestInterceptor) {
+        console.log(
+          '----- BusyIndicatorProvider :: Ejecting request interceptor'
+        )
+        api.interceptors.response.eject(requestInterceptor.index)
+      }
+      interceptorsStore.removeRequestInterceptor('busy-indicator')
+
+      const responseInterceptor =
+        interceptorsStore.getResponseInterceptor('busy-indicator')
+      if (responseInterceptor) {
+        console.log(
+          '----- BusyIndicatorProvider :: Ejecting response interceptor'
+        )
+        api.interceptors.response.eject(responseInterceptor.index)
+      }
+      interceptorsStore.removeResponseInterceptor('busy-indicator')
+    }
+  }, [interceptorsStore])
 
   const loadingCount = () => {
     return busyEndpoints.filter((e) => e.type === 'receiving').length
