@@ -111,37 +111,40 @@ function ApiValidationProvider(props: Props) {
     })
   }, [])
 
-  const onResponse = (response: AxiosResponse) => {
+  const onResponse = useCallback((response: AxiosResponse) => {
     return response
-  }
+  }, [])
 
-  const onResponseError = (error: AxiosError<ApiValidationData>) => {
-    const data = error?.response?.data
+  const onResponseError = useCallback(
+    (error: AxiosError<ApiValidationData>) => {
+      const data = error?.response?.data
 
-    if (data?.errors) {
-      console.log('Validation errors:', data?.errors)
-      // We have Api validation error.
-      mergeErrors(data)
-    } else {
-      console.log(
-        'Response error:',
-        data?.message || 'Server error',
-        data?.code
-      )
-      // Regular error response, e.g. 401 during login.
-      // For regular error responses there is no need to merge errors:
-      // we just set "Global" context error.
-      dispatch({
-        type: 'merge',
-        errors: [
-          { errors: [data?.message || 'Server error'], context: 'Global' }
-        ]
-      })
-    }
+      if (data?.errors) {
+        console.log('Validation errors:', data?.errors)
+        // We have Api validation error.
+        mergeErrors(data)
+      } else {
+        console.log(
+          'Response error:',
+          data?.message || 'Server error',
+          data?.code
+        )
+        // Regular error response, e.g. 401 during login.
+        // For regular error responses there is no need to merge errors:
+        // we just set "Global" context error.
+        dispatch({
+          type: 'merge',
+          errors: [
+            { errors: [data?.message || 'Server error'], context: 'Global' }
+          ]
+        })
+      }
 
-    // Rethrow error after we update validation context data.
-    throw error
-  }
+      // Rethrow error after we update validation context data.
+      throw error
+    },
+    [mergeErrors]
+  )
 
   useEffect(() => {
     const interceptor = api.interceptors.response.use(
@@ -152,7 +155,7 @@ function ApiValidationProvider(props: Props) {
     return () => {
       api.interceptors.response.eject(interceptor)
     }
-  })
+  }, [onResponse, onResponseError])
 
   return (
     <ApiValidationContext.Provider

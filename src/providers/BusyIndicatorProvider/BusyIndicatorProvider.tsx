@@ -7,6 +7,7 @@ import {
   InternalAxiosRequestConfig
 } from 'axios'
 import { api } from '@/services'
+import useInterceptorsStore from '@/store/LoadingStateStore'
 
 type Props = {
   children: ReactNode
@@ -88,7 +89,23 @@ function BusyIndicatorProvider(props: Props) {
     }
   }
 
+  const interceptorsStore = useInterceptorsStore()
+
   useEffect(() => {
+    console.log('***** Interceptors store', interceptorsStore)
+
+    // const hasRequestInterceptor = (context: string): boolean => {
+    //   return interceptorsStore.requestInterceptors.some(
+    //     (s) => s.context === context
+    //   )
+    // }
+    //
+    // const hasResponseInterceptor = (context: string): boolean => {
+    //   return interceptorsStore.responseInterceptors.some(
+    //     (s) => s.context === context
+    //   )
+    // }
+
     const onRequest = (
       config: InternalAxiosRequestConfig<AxiosRequestConfig>
     ): InternalAxiosRequestConfig<AxiosRequestConfig> => {
@@ -161,21 +178,42 @@ function BusyIndicatorProvider(props: Props) {
       return Promise.reject(error)
     }
 
-    const requestInterceptor = api.interceptors.request.use(
-      onRequest,
-      onRequestError
-    )
+    if (!interceptorsStore.hasRequestInterceptor('busy-indicator')) {
+      console.log('***** Attaching request interceptor')
+      const requestInterceptor = api.interceptors.request.use(
+        onRequest,
+        onRequestError
+      )
+      interceptorsStore.addRequestInterceptor(
+        requestInterceptor,
+        'busy-indicator'
+      )
+    }
 
-    const responseInterceptor = api.interceptors.response.use(
-      onResponse,
-      onResponseError
+    if (!interceptorsStore.hasResponseInterceptor('busy-indicator')) {
+      console.log('***** Attaching response interceptor')
+      const responseInterceptor = api.interceptors.response.use(
+        onResponse,
+        onResponseError
+      )
+      interceptorsStore.addResponseInterceptor(
+        responseInterceptor,
+        'busy-indicator'
+      )
+    }
+
+    console.log(
+      '***** Existing interceptors',
+      api.interceptors.request,
+      api.interceptors.response
     )
 
     return () => {
-      api.interceptors.request.eject(requestInterceptor)
-      api.interceptors.response.eject(responseInterceptor)
+      console.log('***** BusyIndicatorProvider :: clean-up')
+      // api.interceptors.request.eject(requestInterceptor)
+      // api.interceptors.response.eject(responseInterceptor)
     }
-  }, [busyEndpoints])
+  }, [busyEndpoints, interceptorsStore])
 
   const loadingCount = () => {
     return busyEndpoints.filter((e) => e.type === 'receiving').length
