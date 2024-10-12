@@ -176,6 +176,8 @@ function BusyIndicatorProvider(props: Props) {
       return Promise.reject(error)
     }
 
+    console.log('***** BusyIndicatorProvider :: effect triggered')
+
     uniqueInterceptors.useRequestInterceptor(
       'busy-indicator',
       onRequest,
@@ -197,9 +199,9 @@ function BusyIndicatorProvider(props: Props) {
 
   useEffect(() => {
     return () => {
-      // TODO: We have an issue here - interceptors are ejected right away and not attached any more.
-      // uniqueInterceptors.ejectRequestInterceptor('busy-indicator')
-      // uniqueInterceptors.ejectResponseInterceptor('busy-indicator')
+      console.log('***** BusyIndicatorProvider :: effect clean-up')
+      uniqueInterceptors.ejectRequestInterceptor('busy-indicator')
+      uniqueInterceptors.ejectResponseInterceptor('busy-indicator')
     }
   }, [uniqueInterceptors])
 

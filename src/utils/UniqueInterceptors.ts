@@ -29,6 +29,11 @@ export class UniqueInterceptors {
         callbackError
       )
       this.store().addRequestInterceptor(requestInterceptor, context)
+    } else {
+      console.log(
+        '***** Request interceptor for ' + context + ' already exists',
+        this.store().getRequestInterceptor(context)
+      )
     }
   }
 
@@ -44,22 +49,29 @@ export class UniqueInterceptors {
         callbackError
       )
       this.store().addResponseInterceptor(responseInterceptor, context)
+    } else {
+      console.log(
+        '***** Response interceptor for ' + context + ' already exists',
+        this.store().getResponseInterceptor(context)
+      )
     }
   }
 
   ejectRequestInterceptor(context: string) {
     const interceptor = this.store().getRequestInterceptor(context)
     if (interceptor) {
-      console.log('----- Ejecting request interceptor', context)
       api.interceptors.request.eject(interceptor.index)
+      this.store().removeRequestInterceptor(context)
+      console.log('----- Ejecting request interceptor', context)
     }
   }
 
   ejectResponseInterceptor(context: string) {
     const interceptor = this.store().getResponseInterceptor(context)
     if (interceptor) {
-      console.log('----- Ejecting response interceptor', context)
       api.interceptors.response.eject(interceptor.index)
+      this.store().removeResponseInterceptor(context)
+      console.log('----- Ejecting response interceptor', context)
     }
   }
 }

@@ -156,8 +156,8 @@ function ApiValidationProvider(props: Props) {
 
   useEffect(() => {
     return () => {
-      // TODO: We have an issue here - interceptor is ejected right away and not attached any more.
-      // uniqueInterceptors.ejectResponseInterceptor('api-validation')
+      console.log('***** ApiValidationProvider :: effect clean-up')
+      uniqueInterceptors.ejectResponseInterceptor('api-validation')
     }
   }, [uniqueInterceptors])
 

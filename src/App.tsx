@@ -12,8 +12,8 @@ import 'bootstrap-icons/font/bootstrap-icons.css'
 function App() {
   return (
     <StrictMode>
-      <BrowserRouter>
-        <BusyIndicatorProvider>
+      <BusyIndicatorProvider>
+        <BrowserRouter>
           <LoadingProgressBar />
           <ApiValidationProvider>
             <AuthProvider>
@@ -25,8 +25,8 @@ function App() {
               </MercureProvider>
             </AuthProvider>
           </ApiValidationProvider>
-        </BusyIndicatorProvider>
-      </BrowserRouter>
+        </BrowserRouter>
+      </BusyIndicatorProvider>
     </StrictMode>
   )
 }
