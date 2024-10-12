@@ -6,7 +6,7 @@ import { CanAccess, Loader } from '@/components'
 import ModelBase from '@/models/ModelBase'
 import SearchBox from '@/components/ServerTable/SearchBox'
 import TableFooter from '@/components/ServerTable/TableFooter'
-import { useSession } from '@/hooks'
+import { useBusyIndicator, useSession } from '@/hooks'
 
 export type ColumnConfig = {
   key: string
@@ -21,6 +21,7 @@ export interface RowAction<T> {
   label: string
   icon?: string | undefined
   permissions?: string[]
+  route?: string | string[]
   callback: (item: T) => void
 }
 
@@ -76,6 +77,25 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     totalPages: 1
   })
   const { user } = useSession()
+
+  // Check activity for given endpoint and show spinner.
+  const { isEndpointBusy } = useBusyIndicator()
+  const actionDisabled = (route?: string | string[], itemId?: string) => {
+    if (route) {
+      if (!Array.isArray(route)) {
+        route = [route]
+      }
+
+      route = route.map((r) => {
+        if (itemId) {
+          return r.replace(/{.*?}/, itemId)
+        }
+        return route
+      }) as string[]
+      return isEndpointBusy(route)
+    }
+    return false
+  }
 
   useEffect(() => {
     async function loadItems() {
@@ -201,13 +221,21 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
                         <i
                           className={'bi ' + action.icon}
                           style={{ cursor: 'pointer' }}
-                          onClick={() => action.callback(item)}
+                          onClick={() =>
+                            actionDisabled(action.route, item.id.toString())
+                              ? {}
+                              : action.callback(item)
+                          }
                         />
                       ) : (
                         <a
                           style={{ marginRight: 5 }}
                           href="#"
-                          onClick={() => action.callback(item)}
+                          onClick={() =>
+                            actionDisabled(action.route, item.id.toString())
+                              ? {}
+                              : action.callback(item)
+                          }
                         >
                           {action.label}
                         </a>

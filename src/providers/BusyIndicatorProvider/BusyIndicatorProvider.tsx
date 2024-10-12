@@ -228,16 +228,24 @@ function BusyIndicatorProvider(props: Props) {
   }
 
   const isEndpointBusy = (
-    endpoint: string,
+    endpoint: string | string[],
     activity?: 'all' | 'sending' | 'receiving'
   ) => {
+    // We support multiple endpoints in this check. Always convert endpoint to array.
+    if (!Array.isArray(endpoint)) {
+      endpoint = [endpoint]
+    }
     if (!activity || activity === 'all') {
       // Ignore query string when matching endpoint.
-      return busyEndpoints.some((e) => e.url.split('?')[0] === endpoint)
+      return (
+        busyEndpoints.filter((e) => endpoint.includes(e.url.split('?')[0]))
+          .length > 0
+      )
     }
-    return busyEndpoints.some(
-      // Ignore query string when matching endpoint.
-      (e) => e.url.split('?')[0] === endpoint && e.type === activity
+    return (
+      busyEndpoints.filter(
+        (e) => e.type === activity && endpoint.includes(e.url.split('?')[0])
+      ).length > 0
     )
   }
 

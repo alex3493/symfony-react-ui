@@ -11,7 +11,7 @@ export type BusyIndicatorData = {
   loadingCount: () => number
   sendingCount: () => number
   isEndpointBusy: (
-    endpoint: string,
+    endpoint: string | string[],
     activity?: 'all' | 'sending' | 'receiving'
   ) => boolean
   isBusy: (activity?: 'all' | 'sending' | 'receiving') => boolean

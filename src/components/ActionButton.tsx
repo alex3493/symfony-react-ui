@@ -6,7 +6,7 @@ type Props = {
   label: string
   variant?: string | undefined
   onClick: () => void
-  route: string
+  route: string | string[]
   // There are cases when we have to disable a button, not showing activity spinner.
   disabled?: boolean | undefined
   style?: object | undefined

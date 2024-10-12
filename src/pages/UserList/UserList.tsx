@@ -81,7 +81,8 @@ function UserList() {
       callback: function (item: UserModel): void {
         console.log('Delete action callback', item)
         userDelete(item).then(() => console.log('User deleted'))
-      }
+      },
+      route: USER_DELETE_API_ROUTE
     },
     {
       key: 'user.soft-delete',
@@ -91,7 +92,8 @@ function UserList() {
       callback: function (item: UserModel): void {
         console.log('Soft-delete action callback', item)
         userSoftDelete(item).then(() => console.log('User deleted'))
-      }
+      },
+      route: [USER_SOFT_DELETE_API_ROUTE, USER_LIST_API_ROUTE]
     },
     {
       key: 'user.restore',
@@ -101,7 +103,8 @@ function UserList() {
       callback: function (item: UserModel): void {
         console.log('Restore action callback', item)
         userRestore(item).then(() => console.log('User deleted'))
-      }
+      },
+      route: [USER_RESTORE_API_ROUTE, USER_LIST_API_ROUTE]
     }
   ]
 
