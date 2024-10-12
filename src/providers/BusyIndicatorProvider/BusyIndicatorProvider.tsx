@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useReducer } from 'react'
+import { ReactNode, useEffect, useMemo, useReducer } from 'react'
 import { BusyEndpoint, BusyIndicatorContext } from '@/contexts'
 import {
   AxiosError,
@@ -7,7 +7,7 @@ import {
   InternalAxiosRequestConfig
 } from 'axios'
 import { api } from '@/services'
-import { useInterceptorsStore } from '@/store'
+import { UniqueInterceptors } from '@/utils/UniqueInterceptors'
 
 type Props = {
   children: ReactNode
@@ -89,13 +89,20 @@ function BusyIndicatorProvider(props: Props) {
     }
   }
 
-  const interceptorsStore = useInterceptorsStore()
+  const uniqueInterceptors = useMemo(() => {
+    return new UniqueInterceptors()
+  }, [])
 
   useEffect(() => {
     const onRequest = (
       config: InternalAxiosRequestConfig<AxiosRequestConfig>
     ): InternalAxiosRequestConfig<AxiosRequestConfig> => {
       if (config.url && config.method) {
+        // console.log(
+        //   '***** BusyIndicatorProvider :: onRequest',
+        //   config.url,
+        //   config.method
+        // )
         dispatch({
           type: 'increment',
           endpoint: {
@@ -111,6 +118,11 @@ function BusyIndicatorProvider(props: Props) {
 
     const onResponse = (response: AxiosResponse): AxiosResponse => {
       if (response.config.url && response.config.method) {
+        // console.log(
+        //   '***** BusyIndicatorProvider :: onResponse',
+        //   response.config.url,
+        //   response.config.method
+        // )
         dispatch({
           type: 'decrement',
           endpoint: {
@@ -136,7 +148,7 @@ function BusyIndicatorProvider(props: Props) {
       return Promise.reject(error)
     }
 
-    const onResponseError = (error: AxiosError): Promise<AxiosError> => {
+    const onResponseError = (error: AxiosError) => {
       if (error.config?.url && error.config?.method) {
         dispatch({
           type: 'decrement',
@@ -164,64 +176,32 @@ function BusyIndicatorProvider(props: Props) {
       return Promise.reject(error)
     }
 
-    if (!interceptorsStore.hasRequestInterceptor('busy-indicator')) {
-      console.log(
-        '+++++ BusyIndicatorProvider :: Attaching request interceptor'
-      )
-      const requestInterceptor = api.interceptors.request.use(
-        onRequest,
-        onRequestError
-      )
-      interceptorsStore.addRequestInterceptor(
-        requestInterceptor,
-        'busy-indicator'
-      )
-    }
+    uniqueInterceptors.useRequestInterceptor(
+      'busy-indicator',
+      onRequest,
+      onRequestError
+    )
 
-    if (!interceptorsStore.hasResponseInterceptor('busy-indicator')) {
-      console.log(
-        '+++++ BusyIndicatorProvider :: Attaching response interceptor'
-      )
-      const responseInterceptor = api.interceptors.response.use(
-        onResponse,
-        onResponseError
-      )
-      interceptorsStore.addResponseInterceptor(
-        responseInterceptor,
-        'busy-indicator'
-      )
-    }
+    uniqueInterceptors.useResponseInterceptor(
+      'busy-indicator',
+      onResponse,
+      onResponseError
+    )
 
     console.log(
       '***** Existing interceptors',
       api.interceptors.request,
       api.interceptors.response
     )
-  }, [busyEndpoints, interceptorsStore])
+  }, [busyEndpoints, uniqueInterceptors])
 
   useEffect(() => {
     return () => {
-      const requestInterceptor =
-        interceptorsStore.getRequestInterceptor('busy-indicator')
-      if (requestInterceptor) {
-        console.log(
-          '----- BusyIndicatorProvider :: Ejecting request interceptor'
-        )
-        api.interceptors.response.eject(requestInterceptor.index)
-      }
-      interceptorsStore.removeRequestInterceptor('busy-indicator')
-
-      const responseInterceptor =
-        interceptorsStore.getResponseInterceptor('busy-indicator')
-      if (responseInterceptor) {
-        console.log(
-          '----- BusyIndicatorProvider :: Ejecting response interceptor'
-        )
-        api.interceptors.response.eject(responseInterceptor.index)
-      }
-      interceptorsStore.removeResponseInterceptor('busy-indicator')
+      // TODO: We have an issue here - interceptors are ejected right away and not attached any more.
+      // uniqueInterceptors.ejectRequestInterceptor('busy-indicator')
+      // uniqueInterceptors.ejectResponseInterceptor('busy-indicator')
     }
-  }, [interceptorsStore])
+  }, [uniqueInterceptors])
 
   const loadingCount = () => {
     return busyEndpoints.filter((e) => e.type === 'receiving').length

@@ -1,12 +1,11 @@
-import { ReactNode, useCallback, useEffect, useReducer } from 'react'
+import { ReactNode, useCallback, useEffect, useMemo, useReducer } from 'react'
 import {
   ApiValidationContext,
   ApiValidationData,
   ApiValidationError
 } from '@/contexts'
-import { api } from '@/services'
 import { AxiosError, AxiosResponse } from 'axios'
-import { useInterceptorsStore } from '@/store'
+import { UniqueInterceptors } from '@/utils/UniqueInterceptors'
 
 type Props = {
   children: ReactNode
@@ -112,7 +111,9 @@ function ApiValidationProvider(props: Props) {
     })
   }, [])
 
-  const interceptorsStore = useInterceptorsStore()
+  const uniqueInterceptors = useMemo(() => {
+    return new UniqueInterceptors()
+  }, [])
 
   useEffect(() => {
     const onResponse = (response: AxiosResponse) => {
@@ -144,34 +145,20 @@ function ApiValidationProvider(props: Props) {
       }
 
       // Rethrow error after we update validation context data.
-      throw error
+      return Promise.reject(error)
     }
-
-    if (!interceptorsStore.hasResponseInterceptor('api-validation')) {
-      console.log(
-        '+++++ ApiValidationProvider :: Attaching response interceptor'
-      )
-      const interceptor = api.interceptors.response.use(
-        onResponse,
-        onResponseError
-      )
-      interceptorsStore.addResponseInterceptor(interceptor, 'api-validation')
-    }
-  }, [interceptorsStore, mergeErrors])
+    uniqueInterceptors.useResponseInterceptor(
+      'api-validation',
+      onResponse,
+      onResponseError
+    )
+  }, [mergeErrors, uniqueInterceptors])
 
   useEffect(() => {
     return () => {
-      const interceptor =
-        interceptorsStore.getResponseInterceptor('api-validation')
-      if (interceptor) {
-        console.log(
-          '----- ApiValidationProvider :: Ejecting response interceptor'
-        )
-        api.interceptors.response.eject(interceptor.index)
-      }
-      interceptorsStore.removeResponseInterceptor('api-validation')
+      uniqueInterceptors.ejectResponseInterceptor('api-validation')
     }
-  }, [interceptorsStore])
+  }, [uniqueInterceptors])
 
   return (
     <ApiValidationContext.Provider

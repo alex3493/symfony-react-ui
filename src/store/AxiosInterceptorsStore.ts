@@ -10,7 +10,7 @@ type State = {
   responseInterceptors: InterceptorData[]
 }
 
-type Action = {
+export type Action = {
   addRequestInterceptor: (index: number, context: string) => void
   addResponseInterceptor: (index: number, context: string) => void
   removeRequestInterceptor: (context: string) => void
