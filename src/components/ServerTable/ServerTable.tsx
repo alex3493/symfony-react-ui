@@ -175,6 +175,43 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     return value as string
   }
 
+  const actionControl = (action: RowAction<T>, item: T) => {
+    const disabled = actionDisabled(action.route, item.id.toString())
+    if (action.icon) {
+      if (disabled) {
+        return <i className={'bi ' + action.icon} />
+      } else {
+        return (
+          <i
+            className={'bi ' + action.icon}
+            style={{
+              cursor: 'pointer'
+            }}
+            onClick={() => action.callback(item)}
+          />
+        )
+      }
+    } else {
+      if (disabled) {
+        return <span style={{ marginRight: 5 }}>{action.label}</span>
+      } else {
+        return (
+          <a
+            style={{ marginRight: 5 }}
+            href="#"
+            onClick={() =>
+              actionDisabled(action.route, item.id.toString())
+                ? {}
+                : action.callback(item)
+            }
+          >
+            {action.label}
+          </a>
+        )
+      }
+    }
+  }
+
   return (
     <div>
       <SearchBox onInput={onSearchQueryChange} />
@@ -201,7 +238,14 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         <tbody>
           {items?.length > 0 ? (
             items.map((item: T) => (
-              <tr key={item.id}>
+              <tr
+                key={item.id}
+                style={
+                  'deleted_at' in item && item.deleted_at
+                    ? { opacity: 0.5 }
+                    : { opacity: 1 }
+                }
+              >
                 {columns.map((column: ColumnConfig) => (
                   <td key={column.key}>
                     {column.render
@@ -217,29 +261,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
                       roles={user?.roles}
                       permissions={action.permissions}
                     >
-                      {action.icon ? (
-                        <i
-                          className={'bi ' + action.icon}
-                          style={{ cursor: 'pointer' }}
-                          onClick={() =>
-                            actionDisabled(action.route, item.id.toString())
-                              ? {}
-                              : action.callback(item)
-                          }
-                        />
-                      ) : (
-                        <a
-                          style={{ marginRight: 5 }}
-                          href="#"
-                          onClick={() =>
-                            actionDisabled(action.route, item.id.toString())
-                              ? {}
-                              : action.callback(item)
-                          }
-                        >
-                          {action.label}
-                        </a>
-                      )}{' '}
+                      {actionControl(action, item)}{' '}
                     </CanAccess>
                   ))}
                 </td>
