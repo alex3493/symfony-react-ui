@@ -6,10 +6,10 @@ import {
   InternalAxiosRequestConfig
 } from 'axios'
 import { api } from '@/services'
-import { Action } from '@/store/AxiosInterceptorsStore'
+import { InterceptorStoreAction } from '@/store/AxiosInterceptorsStore'
 
 export class UniqueInterceptors {
-  store: () => Action
+  store: () => InterceptorStoreAction
 
   constructor() {
     this.store = useInterceptorsStore.getState
@@ -29,11 +29,6 @@ export class UniqueInterceptors {
         callbackError
       )
       this.store().addRequestInterceptor(requestInterceptor, context)
-    } else {
-      console.log(
-        '***** Request interceptor for ' + context + ' already exists',
-        this.store().getRequestInterceptor(context)
-      )
     }
   }
 
@@ -49,11 +44,6 @@ export class UniqueInterceptors {
         callbackError
       )
       this.store().addResponseInterceptor(responseInterceptor, context)
-    } else {
-      console.log(
-        '***** Response interceptor for ' + context + ' already exists',
-        this.store().getResponseInterceptor(context)
-      )
     }
   }
 
