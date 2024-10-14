@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { api } from '@/services'
 import Table from 'react-bootstrap/Table'
 import SortableHeader from './SortableHeader'
@@ -6,7 +6,8 @@ import { CanAccess, Loader } from '@/components'
 import ModelBase from '@/models/ModelBase'
 import SearchBox from '@/components/ServerTable/SearchBox'
 import TableFooter from '@/components/ServerTable/TableFooter'
-import { useBusyIndicator, useSession } from '@/hooks'
+import { useBusyIndicator, useMercureUpdates, useSession } from '@/hooks'
+import { AxiosError } from 'axios'
 
 export type ColumnConfig = {
   key: string
@@ -34,6 +35,7 @@ interface TableConfig<T> {
   rowActions: RowAction<T>[]
   version: string
   withDeleted?: boolean
+  mercureTopic?: string
 }
 
 type Pagination = {
@@ -59,11 +61,12 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     defaultSortDesc,
     rowActions,
     version,
-    withDeleted
+    withDeleted,
+    mercureTopic
   } = config
 
   const [dataLoaded, setDataLoaded] = useState(false)
-  const [items, setItems] = useState([])
+  const [items, setItems] = useState<T[]>([])
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
     limit: 10,
@@ -76,7 +79,10 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     totalItems: 0,
     totalPages: 1
   })
-  const { user } = useSession()
+  const { user, mercureHubUrl } = useSession()
+
+  const { discoverMercureHub, addSubscription, removeSubscription } =
+    useMercureUpdates()
 
   // Check activity for given endpoint and show spinner.
   const { isEndpointBusy } = useBusyIndicator()
@@ -133,6 +139,53 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
       setDataLoaded(false)
     }
   }, [dataUrl, mapper, pagination, version])
+
+  const subscriptionCallback = useCallback(
+    (event: MessageEvent) => {
+      console.log(
+        '***** UserList :: Mercure message received',
+        JSON.parse(event.data)
+      )
+      const eventData = JSON.parse(event.data)
+      const index = items.findIndex((i: T) => i.id === eventData.item.id)
+      if (eventData.action === 'user_update' && index >= 0) {
+        const updated = [...items]
+        updated.splice(index, 1, mapper(eventData.item))
+        setItems(updated)
+      }
+    },
+    [items, mapper]
+  )
+
+  useEffect(() => {
+    async function subscribe(mercureTopic: string) {
+      try {
+        await discoverMercureHub(mercureHubUrl)
+        await addSubscription(mercureTopic, subscriptionCallback)
+      } catch (error) {
+        return error as AxiosError
+      }
+    }
+
+    if (mercureTopic) {
+      subscribe(mercureTopic).catch((error) => {
+        console.log('Error subscribing to list updates', error)
+      })
+    }
+
+    return () => {
+      if (mercureTopic) {
+        removeSubscription(mercureTopic)
+      }
+    }
+  }, [
+    addSubscription,
+    discoverMercureHub,
+    mercureHubUrl,
+    mercureTopic,
+    removeSubscription,
+    subscriptionCallback
+  ])
 
   const isOrderedBy = (sortKey: string) => pagination.orderBy === sortKey
   const isOrderDesc = () => pagination.orderDesc === 1

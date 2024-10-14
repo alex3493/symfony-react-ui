@@ -234,6 +234,7 @@ function UserList() {
         defaultSortBy={'name'}
         defaultSortDesc={false}
         withDeleted={user?.role === 'ROLE_ADMIN'}
+        mercureTopic="users::update"
         mapper={mapper}
         rowActions={rowActions}
         version={dataVersion}
