@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useReducer, useState } from 'react'
 import { api } from '@/services'
 import Table from 'react-bootstrap/Table'
 import SortableHeader from './SortableHeader'
@@ -8,6 +8,7 @@ import SearchBox from '@/components/ServerTable/SearchBox'
 import TableFooter from '@/components/ServerTable/TableFooter'
 import { useBusyIndicator, useMercureUpdates, useSession } from '@/hooks'
 import { AxiosError } from 'axios'
+import { notify } from '@/utils'
 
 export type ColumnConfig = {
   key: string
@@ -66,7 +67,54 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   } = config
 
   const [dataLoaded, setDataLoaded] = useState(false)
-  const [items, setItems] = useState<T[]>([])
+
+  type State<T> = {
+    items: T[]
+  }
+
+  type itemsUpdateAction<T> =
+    | { type: 'init'; payload: T[] }
+    | { type: 'create'; payload: T }
+    | {
+        type: 'update'
+        payload: T
+      }
+    | { type: 'soft_delete'; payload: T }
+    | { type: 'force_delete'; payload: T }
+
+  const itemsReducer = (
+    state: State<T>,
+    action: itemsUpdateAction<T>
+  ): State<T> => {
+    let index
+    switch (action.type) {
+      case 'init':
+        return { items: action.payload }
+      case 'create':
+        console.log('***** Item created!', action.payload)
+        return state
+      case 'update':
+      case 'soft_delete':
+        index = state.items.findIndex((i: T) => i.id === action.payload.id)
+        if (index >= 0) {
+          const updated = [...state.items]
+          updated.splice(index, 1, mapper(action.payload))
+          return { items: updated }
+        }
+        break
+      case 'force_delete':
+        console.log('***** Item deleted!', action.payload)
+        return state
+      default:
+        console.log('ERROR :: Unknown action in list update message!')
+        return state
+    }
+
+    return state
+  }
+
+  const [items, dispatch] = useReducer(itemsReducer, { items: [] })
+
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
     limit: 10,
@@ -125,7 +173,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         totalPages
       )
 
-      setItems(responseItems)
+      dispatch({ type: 'init', payload: responseItems })
       setPaginationTotals({ totalItems, totalPages })
       setDataLoaded(true)
     }
@@ -140,22 +188,32 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     }
   }, [dataUrl, mapper, pagination, version])
 
-  const subscriptionCallback = useCallback(
-    (event: MessageEvent) => {
-      console.log(
-        '***** UserList :: Mercure message received',
-        JSON.parse(event.data)
-      )
-      const eventData = JSON.parse(event.data)
-      const index = items.findIndex((i: T) => i.id === eventData.item.id)
-      if (eventData.action === 'user_update' && index >= 0) {
-        const updated = [...items]
-        updated.splice(index, 1, mapper(eventData.item))
-        setItems(updated)
-      }
-    },
-    [items, mapper]
-  )
+  const subscriptionCallback = useCallback((event: MessageEvent) => {
+    console.log(
+      '***** UserList :: Mercure message received',
+      JSON.parse(event.data)
+    )
+    const eventData = JSON.parse(event.data)
+
+    switch (eventData.action) {
+      case 'create':
+        notify('Item created', eventData.item.id.toString())
+        dispatch({ type: 'create', payload: eventData.item })
+        break
+      case 'update':
+        dispatch({ type: 'update', payload: eventData.item })
+        break
+      case 'soft_delete':
+        dispatch({ type: 'soft_delete', payload: eventData.item })
+        break
+      case 'force_delete':
+        notify('Item deleted', eventData.item.id.toString())
+        dispatch({ type: 'force_delete', payload: eventData.item })
+        break
+      default:
+        console.log('ERROR :: Unknown action in list update message!')
+    }
+  }, [])
 
   useEffect(() => {
     async function subscribe(mercureTopic: string) {
@@ -289,8 +347,8 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
           </tr>
         </thead>
         <tbody>
-          {items?.length > 0 ? (
-            items.map((item: T) => (
+          {items.items?.length > 0 ? (
+            items.items.map((item: T) => (
               <tr
                 key={item.id}
                 style={

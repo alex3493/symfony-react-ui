@@ -6,8 +6,7 @@ import {
   AxiosResponse,
   InternalAxiosRequestConfig
 } from 'axios'
-import { api } from '@/services'
-import { UniqueInterceptors } from '@/utils/UniqueInterceptors'
+import { UniqueInterceptors } from '@/utils'
 
 type Props = {
   children: ReactNode
@@ -176,7 +175,7 @@ function BusyIndicatorProvider(props: Props) {
       return Promise.reject(error)
     }
 
-    console.log('***** BusyIndicatorProvider :: effect triggered')
+    // console.log('***** BusyIndicatorProvider :: effect triggered')
 
     uniqueInterceptors.useRequestInterceptor(
       'busy-indicator',
@@ -190,16 +189,16 @@ function BusyIndicatorProvider(props: Props) {
       onResponseError
     )
 
-    console.log(
-      '***** Existing interceptors',
-      api.interceptors.request,
-      api.interceptors.response
-    )
+    // console.log(
+    //   '***** Existing interceptors',
+    //   api.interceptors.request,
+    //   api.interceptors.response
+    // )
   }, [busyEndpoints, uniqueInterceptors])
 
   useEffect(() => {
     return () => {
-      console.log('***** BusyIndicatorProvider :: effect clean-up')
+      // console.log('***** BusyIndicatorProvider :: effect clean-up')
       uniqueInterceptors.ejectRequestInterceptor('busy-indicator')
       uniqueInterceptors.ejectResponseInterceptor('busy-indicator')
     }

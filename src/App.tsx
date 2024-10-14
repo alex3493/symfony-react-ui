@@ -8,6 +8,7 @@ import { BusyIndicatorProvider } from '@/providers'
 import { LoadingProgressBar } from '@/components'
 import { StrictMode } from 'react'
 import 'bootstrap-icons/font/bootstrap-icons.css'
+import { Toaster } from 'react-hot-toast'
 
 function App() {
   return (
@@ -26,6 +27,16 @@ function App() {
             </AuthProvider>
           </ApiValidationProvider>
         </BrowserRouter>
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            duration: 5000,
+            style: {
+              background: '#363636',
+              color: '#fff'
+            }
+          }}
+        />
       </BusyIndicatorProvider>
     </StrictMode>
   )

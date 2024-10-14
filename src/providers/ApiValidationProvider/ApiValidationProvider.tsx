@@ -5,7 +5,7 @@ import {
   ApiValidationError
 } from '@/contexts'
 import { AxiosError, AxiosResponse } from 'axios'
-import { UniqueInterceptors } from '@/utils/UniqueInterceptors'
+import { UniqueInterceptors } from '@/utils'
 
 type Props = {
   children: ReactNode
@@ -156,7 +156,7 @@ function ApiValidationProvider(props: Props) {
 
   useEffect(() => {
     return () => {
-      console.log('***** ApiValidationProvider :: effect clean-up')
+      // console.log('***** ApiValidationProvider :: effect clean-up')
       uniqueInterceptors.ejectResponseInterceptor('api-validation')
     }
   }, [uniqueInterceptors])

@@ -23,7 +23,7 @@ export class UniqueInterceptors {
     callbackError: (error: AxiosError) => Promise<AxiosError>
   ) {
     if (!this.store().hasRequestInterceptor(context)) {
-      console.log('+++++ Attaching request interceptor', context)
+      // console.log('+++++ Attaching request interceptor', context)
       const requestInterceptor = api.interceptors.request.use(
         callbackSuccess,
         callbackError
@@ -38,7 +38,7 @@ export class UniqueInterceptors {
     callbackError: (error: AxiosError<never>) => Promise<never>
   ) {
     if (!this.store().hasResponseInterceptor(context)) {
-      console.log('+++++ Attaching response interceptor', context)
+      // console.log('+++++ Attaching response interceptor', context)
       const responseInterceptor = api.interceptors.response.use(
         callbackSuccess,
         callbackError
@@ -52,7 +52,7 @@ export class UniqueInterceptors {
     if (interceptor) {
       api.interceptors.request.eject(interceptor.index)
       this.store().removeRequestInterceptor(context)
-      console.log('----- Ejecting request interceptor', context)
+      // console.log('----- Ejecting request interceptor', context)
     }
   }
 
@@ -61,7 +61,7 @@ export class UniqueInterceptors {
     if (interceptor) {
       api.interceptors.response.eject(interceptor.index)
       this.store().removeResponseInterceptor(context)
-      console.log('----- Ejecting response interceptor', context)
+      // console.log('----- Ejecting response interceptor', context)
     }
   }
 }

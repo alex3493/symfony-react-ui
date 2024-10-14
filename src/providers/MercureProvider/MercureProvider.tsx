@@ -36,6 +36,8 @@ function MercureProvider(props: Props) {
         console.log('Error authorizing mercure hub', error)
         // return Promise.reject(error)
       }
+    } else {
+      console.log('Mercure hub already initialized')
     }
   }
 

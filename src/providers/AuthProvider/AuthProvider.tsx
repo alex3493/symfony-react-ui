@@ -12,8 +12,6 @@ import {
 } from '@/utils'
 import UserModel from '@/models/UserModel'
 
-import toast, { Toaster } from 'react-hot-toast'
-
 type Props = {
   children: ReactNode
 }
@@ -104,17 +102,6 @@ function AuthProvider(props: Props) {
     }
   }, [pathname, token])
 
-  const notify = (author: string, text: string) =>
-    toast(
-      <div>
-        <b>{author}</b>
-        <p>{text}</p>
-      </div>,
-      {
-        duration: 10000
-      }
-    )
-
   useEffect(() => {
     const token = getToken()
 
@@ -141,16 +128,6 @@ function AuthProvider(props: Props) {
       }}
     >
       {children}
-      <Toaster
-        position="bottom-right"
-        toastOptions={{
-          duration: 5000,
-          style: {
-            background: '#363636',
-            color: '#fff'
-          }
-        }}
-      />
     </AuthContext.Provider>
   )
 }
