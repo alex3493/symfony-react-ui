@@ -9,6 +9,7 @@ import TableFooter from '@/components/ServerTable/TableFooter'
 import { useBusyIndicator, useMercureUpdates, useSession } from '@/hooks'
 import { AxiosError } from 'axios'
 import { notify } from '@/utils'
+import { Alert } from 'react-bootstrap'
 
 export type ColumnConfig = {
   key: string
@@ -37,6 +38,7 @@ interface TableConfig<T> {
   version: string
   withDeleted?: boolean
   mercureTopic?: string
+  refreshTableCallback?: () => void
 }
 
 type Pagination = {
@@ -63,14 +65,15 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     rowActions,
     version,
     withDeleted,
-    mercureTopic
+    mercureTopic,
+    refreshTableCallback
   } = config
 
   const [dataLoaded, setDataLoaded] = useState(false)
 
   type State<T> = {
     items: T[]
-    // TODO: we can add optional notifications here...
+    notification?: string | undefined
   }
 
   type itemsUpdateAction<T> =
@@ -81,6 +84,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         payload: T
       }
     | { type: 'soft_delete'; payload: T }
+    | { type: 'restore'; payload: T }
     | { type: 'force_delete'; payload: T }
 
   const itemsReducer = (
@@ -93,19 +97,20 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         return { items: action.payload }
       case 'create':
         console.log('***** Item created!', action.payload)
-        return state
+        return { ...state, notification: 'Item created' }
       case 'update':
       case 'soft_delete':
+      case 'restore':
         index = state.items.findIndex((i: T) => i.id === action.payload.id)
         if (index >= 0) {
           const updated = [...state.items]
           updated.splice(index, 1, mapper(action.payload))
-          return { items: updated }
+          return { items: updated, notification: 'Item updated' }
         }
         break
       case 'force_delete':
         console.log('***** Item deleted!', action.payload)
-        return state
+        return { ...state, notification: 'Item deleted' }
       default:
         console.log('ERROR :: Unknown action in list update message!')
         return state
@@ -114,7 +119,10 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     return state
   }
 
-  const [items, dispatch] = useReducer(itemsReducer, { items: [] })
+  const [items, dispatch] = useReducer(itemsReducer, {
+    items: [],
+    notification: undefined
+  })
 
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -189,32 +197,39 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     }
   }, [dataUrl, mapper, pagination, version])
 
-  const subscriptionCallback = useCallback((event: MessageEvent) => {
-    console.log(
-      '***** UserList :: Mercure message received',
-      JSON.parse(event.data)
-    )
-    const eventData = JSON.parse(event.data)
+  const subscriptionCallback = useCallback(
+    (event: MessageEvent) => {
+      console.log(
+        '***** UserList :: Mercure message received',
+        JSON.parse(event.data)
+      )
+      const eventData = JSON.parse(event.data)
+      eventData.item = mapper(eventData.item)
 
-    switch (eventData.action) {
-      case 'create':
-        notify('Item created', eventData.item.id.toString())
-        dispatch({ type: 'create', payload: eventData.item })
-        break
-      case 'update':
-        dispatch({ type: 'update', payload: eventData.item })
-        break
-      case 'soft_delete':
-        dispatch({ type: 'soft_delete', payload: eventData.item })
-        break
-      case 'force_delete':
-        notify('Item deleted', eventData.item.id.toString())
-        dispatch({ type: 'force_delete', payload: eventData.item })
-        break
-      default:
-        console.log('ERROR :: Unknown action in list update message!')
-    }
-  }, [])
+      switch (eventData.action) {
+        case 'create':
+          notify('Item created', eventData.item.displayName())
+          dispatch({ type: 'create', payload: eventData.item })
+          break
+        case 'update':
+          dispatch({ type: 'update', payload: eventData.item })
+          break
+        case 'soft_delete':
+          dispatch({ type: 'soft_delete', payload: eventData.item })
+          break
+        case 'restore':
+          dispatch({ type: 'restore', payload: eventData.item })
+          break
+        case 'force_delete':
+          notify('Item deleted', eventData.item.displayName())
+          dispatch({ type: 'force_delete', payload: eventData.item })
+          break
+        default:
+          console.log('ERROR :: Unknown action in list update message!')
+      }
+    },
+    [mapper]
+  )
 
   useEffect(() => {
     async function subscribe(mercureTopic: string) {
@@ -327,6 +342,15 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   return (
     <div>
       <SearchBox onInput={onSearchQueryChange} />
+
+      {/* TODO: just testing - display reload button conditionally (?) */}
+      <Alert show={items.notification !== undefined}>
+        {items.notification}{' '}
+        <a href="#" onClick={refreshTableCallback}>
+          Reload
+        </a>
+      </Alert>
+
       <Table striped>
         <thead>
           <tr>

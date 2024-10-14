@@ -26,4 +26,8 @@ export default class UserModel extends ModelBase {
       (d) => new RegisteredDeviceModel(d)
     )
   }
+
+  displayName(): string {
+    return this.display_name || super.displayName()
+  }
 }

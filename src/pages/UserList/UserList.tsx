@@ -150,6 +150,8 @@ function UserList() {
   const userRestoreRoute = (id: string | number) =>
     USER_RESTORE_API_ROUTE.replace('{userId}', id.toString())
 
+  const refreshTable = () => setDataVersion(randomVersion())
+
   const userSaveSubmit = async () => {
     const data = ref.current?.getFormData()
 
@@ -161,7 +163,7 @@ function UserList() {
           await api.patch(userSaveRoute, data)
           closeUserEditModal()
 
-          setDataVersion(randomVersion())
+          refreshTable()
         } catch (error) {
           /**
            * an error handler can be added here
@@ -174,7 +176,7 @@ function UserList() {
           await api.post(USER_CREATE_API_ROUTE, data)
           closeUserEditModal()
 
-          setDataVersion(randomVersion())
+          refreshTable()
         } catch (error) {
           /**
            * an error handler can be added here
@@ -188,7 +190,7 @@ function UserList() {
     try {
       await api.delete(userDeleteRoute(user.id))
 
-      setDataVersion(randomVersion())
+      refreshTable()
     } catch (error) {
       /**
        * an error handler can be added here
@@ -200,7 +202,7 @@ function UserList() {
     try {
       await api.patch(userSoftDeleteRoute(user.id))
 
-      setDataVersion(randomVersion())
+      refreshTable()
     } catch (error) {
       /**
        * an error handler can be added here
@@ -212,7 +214,7 @@ function UserList() {
     try {
       await api.patch(userRestoreRoute(user.id))
 
-      setDataVersion(randomVersion())
+      refreshTable()
     } catch (error) {
       /**
        * an error handler can be added here
@@ -238,6 +240,7 @@ function UserList() {
         mapper={mapper}
         rowActions={rowActions}
         version={dataVersion}
+        refreshTableCallback={refreshTable}
       />
       <Modal show={modalOpen} onHide={closeUserEditModal}>
         <Modal.Header closeButton>Edit User</Modal.Header>

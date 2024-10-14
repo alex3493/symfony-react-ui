@@ -22,4 +22,8 @@ export default class ModelBase {
   isValidId(): boolean {
     return !!this.id
   }
+
+  displayName(): string {
+    return this.id.toString()
+  }
 }
