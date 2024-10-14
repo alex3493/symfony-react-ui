@@ -70,6 +70,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
 
   type State<T> = {
     items: T[]
+    // TODO: we can add optional notifications here...
   }
 
   type itemsUpdateAction<T> =
