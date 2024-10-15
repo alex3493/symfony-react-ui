@@ -60,7 +60,7 @@ type State<T> = {
   notification?: string | undefined
 }
 
-export type itemsUpdateAction<T> =
+type ItemsUpdateAction<T> =
   | { type: 'init'; payload: T[] }
   | { type: 'create'; payload: T }
   | {
@@ -90,7 +90,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
 
   const itemsReducer = (
     state: State<T>,
-    action: itemsUpdateAction<T>
+    action: ItemsUpdateAction<T>
   ): State<T> => {
     let index
     switch (action.type) {
@@ -351,6 +351,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         dismissible={true}
         notification={items.notification || ''}
         action={refreshTableCallback}
+        timeOut={10}
         actionOnClose={() =>
           dispatch({ type: 'set_notification', payload: undefined })
         }
