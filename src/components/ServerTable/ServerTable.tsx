@@ -9,7 +9,7 @@ import TableFooter from '@/components/ServerTable/TableFooter'
 import { useBusyIndicator, useMercureUpdates, useSession } from '@/hooks'
 import { AxiosError } from 'axios'
 import { notify } from '@/utils'
-import { Alert } from 'react-bootstrap'
+import UpdateAlert from '@/components/ServerTable/UpdateAlert'
 
 export type ColumnConfig = {
   key: string
@@ -55,6 +55,23 @@ type PaginationTotals = {
   totalPages: number
 }
 
+type State<T> = {
+  items: T[]
+  notification?: string | undefined
+}
+
+export type itemsUpdateAction<T> =
+  | { type: 'init'; payload: T[] }
+  | { type: 'create'; payload: T }
+  | {
+      type: 'update'
+      payload: T
+    }
+  | { type: 'soft_delete'; payload: T }
+  | { type: 'restore'; payload: T }
+  | { type: 'force_delete'; payload: T }
+  | { type: 'set_notification'; payload: string | undefined }
+
 function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   const {
     mapper,
@@ -70,22 +87,6 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   } = config
 
   const [dataLoaded, setDataLoaded] = useState(false)
-
-  type State<T> = {
-    items: T[]
-    notification?: string | undefined
-  }
-
-  type itemsUpdateAction<T> =
-    | { type: 'init'; payload: T[] }
-    | { type: 'create'; payload: T }
-    | {
-        type: 'update'
-        payload: T
-      }
-    | { type: 'soft_delete'; payload: T }
-    | { type: 'restore'; payload: T }
-    | { type: 'force_delete'; payload: T }
 
   const itemsReducer = (
     state: State<T>,
@@ -111,6 +112,9 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
       case 'force_delete':
         console.log('***** Item deleted!', action.payload)
         return { ...state, notification: 'Item deleted' }
+      case 'set_notification':
+        console.log('***** Setting notification', action.payload)
+        return { ...state, notification: action.payload }
       default:
         console.log('ERROR :: Unknown action in list update message!')
         return state
@@ -342,15 +346,15 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   return (
     <div>
       <SearchBox onInput={onSearchQueryChange} />
-
-      {/* TODO: just testing - display reload button conditionally (?) */}
-      <Alert show={items.notification !== undefined}>
-        {items.notification}{' '}
-        <a href="#" onClick={refreshTableCallback}>
-          Reload
-        </a>
-      </Alert>
-
+      <UpdateAlert
+        show={items.notification !== undefined}
+        dismissible={true}
+        notification={items.notification || ''}
+        action={refreshTableCallback}
+        actionOnClose={() =>
+          dispatch({ type: 'set_notification', payload: undefined })
+        }
+      />
       <Table striped>
         <thead>
           <tr>
