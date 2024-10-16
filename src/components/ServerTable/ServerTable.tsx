@@ -8,8 +8,8 @@ import SearchBox from '@/components/ServerTable/SearchBox'
 import TableFooter from '@/components/ServerTable/TableFooter'
 import { useBusyIndicator, useMercureUpdates, useSession } from '@/hooks'
 import { AxiosError } from 'axios'
-import { notify } from '@/utils'
 import UpdateAlert from '@/components/ServerTable/UpdateAlert'
+import { notify } from '@/utils'
 
 export type ColumnConfig = {
   key: string
@@ -58,19 +58,21 @@ type PaginationTotals = {
 type State<T> = {
   items: T[]
   notification?: string | undefined
+  actionControl?: boolean | undefined
 }
 
 type ItemsUpdateAction<T> =
   | { type: 'init'; payload: T[] }
-  | { type: 'create'; payload: T }
+  | { type: 'create'; payload: T; actionControl?: boolean }
   | {
       type: 'update'
       payload: T
+      actionControl?: boolean
     }
-  | { type: 'soft_delete'; payload: T }
-  | { type: 'restore'; payload: T }
-  | { type: 'force_delete'; payload: T }
-  | { type: 'set_notification'; payload: string | undefined }
+  | { type: 'soft_delete'; payload: T; actionControl?: boolean }
+  | { type: 'restore'; payload: T; actionControl?: boolean }
+  | { type: 'force_delete'; payload: T; actionControl?: boolean }
+  | { type: 'clear_notification' }
 
 function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   const {
@@ -92,29 +94,60 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     state: State<T>,
     action: ItemsUpdateAction<T>
   ): State<T> => {
+    const notification = (
+      action: 'create' | 'update' | 'soft_delete' | 'restore' | 'force_delete',
+      item: T
+    ) => {
+      switch (action) {
+        case 'create':
+          return 'Item created: ' + item.displayName()
+        case 'update':
+          return 'Item updated: ' + item.displayName()
+        case 'soft_delete':
+          return 'Item deleted: ' + item.displayName()
+        case 'restore':
+          return 'Item restored: ' + item.displayName()
+        case 'force_delete':
+          return 'Item removed: ' + item.displayName()
+      }
+    }
+
     let index
     switch (action.type) {
       case 'init':
-        return { items: action.payload }
+        return { ...state, items: action.payload }
       case 'create':
         console.log('***** Item created!', action.payload)
-        return { ...state, notification: 'Item created' }
+        return {
+          ...state,
+          notification: notification(action.type, action.payload),
+          actionControl: action.actionControl
+        }
       case 'update':
       case 'soft_delete':
       case 'restore':
+        console.log('***** Item updated!', action.payload)
         index = state.items.findIndex((i: T) => i.id === action.payload.id)
         if (index >= 0) {
           const updated = [...state.items]
           updated.splice(index, 1, mapper(action.payload))
-          return { items: updated, notification: 'Item updated' }
+          return {
+            items: updated,
+            notification: notification(action.type, action.payload),
+            actionControl: action.actionControl
+          }
         }
         break
       case 'force_delete':
         console.log('***** Item deleted!', action.payload)
-        return { ...state, notification: 'Item deleted' }
-      case 'set_notification':
-        console.log('***** Setting notification', action.payload)
-        return { ...state, notification: action.payload }
+        return {
+          ...state,
+          notification: notification(action.type, action.payload),
+          actionControl: action.actionControl
+        }
+      case 'clear_notification':
+        console.log('***** Clear notification')
+        return { ...state, notification: undefined }
       default:
         console.log('ERROR :: Unknown action in list update message!')
         return state
@@ -212,27 +245,57 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
 
       switch (eventData.action) {
         case 'create':
+          dispatch({
+            type: 'create',
+            payload: eventData.item,
+            actionControl: eventData.causer !== user?.email
+          })
           notify('Item created', eventData.item.displayName())
-          dispatch({ type: 'create', payload: eventData.item })
+          if (eventData.causer === user?.email) {
+            if (refreshTableCallback) {
+              refreshTableCallback()
+            }
+          }
           break
         case 'update':
-          dispatch({ type: 'update', payload: eventData.item })
+          dispatch({
+            type: 'update',
+            payload: eventData.item,
+            actionControl: false
+          })
           break
         case 'soft_delete':
-          dispatch({ type: 'soft_delete', payload: eventData.item })
+          dispatch({
+            type: 'soft_delete',
+            payload: eventData.item,
+            actionControl: false
+          })
           break
         case 'restore':
-          dispatch({ type: 'restore', payload: eventData.item })
+          dispatch({
+            type: 'restore',
+            payload: eventData.item,
+            actionControl: false
+          })
           break
         case 'force_delete':
+          dispatch({
+            type: 'force_delete',
+            payload: eventData.item,
+            actionControl: eventData.causer !== user?.email
+          })
           notify('Item deleted', eventData.item.displayName())
-          dispatch({ type: 'force_delete', payload: eventData.item })
+          if (eventData.causer === user?.email) {
+            if (refreshTableCallback) {
+              refreshTableCallback()
+            }
+          }
           break
         default:
           console.log('ERROR :: Unknown action in list update message!')
       }
     },
-    [mapper]
+    [mapper, refreshTableCallback, user?.email]
   )
 
   useEffect(() => {
@@ -351,10 +414,9 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         dismissible={true}
         notification={items.notification || ''}
         action={refreshTableCallback}
+        actionControl={items.actionControl}
         timeOut={10}
-        actionOnClose={() =>
-          dispatch({ type: 'set_notification', payload: undefined })
-        }
+        actionOnClose={() => dispatch({ type: 'clear_notification' })}
       />
       <Table striped>
         <thead>

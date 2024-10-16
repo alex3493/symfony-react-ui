@@ -7,29 +7,24 @@ type Props = {
   timeOut?: number
   notification: string
   action?: () => void
+  actionControl?: boolean
   actionOnClose?: () => void
 }
 
 function UpdateAlert(props: Props) {
-  const { show, dismissible, notification, action, actionOnClose } = props
+  const {
+    show,
+    dismissible,
+    notification,
+    action,
+    actionControl,
+    actionOnClose
+  } = props
 
   let timeOut = props.timeOut === undefined ? 10 : props.timeOut
   const [countDownValue, setCountDownValue] = useState<number>()
 
   const interval = useRef<unknown>(undefined)
-
-  const startCountdown = useCallback(() => {
-    interval.current = setInterval(() => {
-      timeOut--
-      setCountDownValue(timeOut)
-      if (timeOut <= 0) {
-        clearInterval(interval.current as number)
-        if (action) {
-          action()
-        }
-      }
-    }, 1000)
-  }, [action, timeOut])
 
   const stopCountdown = useCallback(() => {
     clearInterval(interval.current as number)
@@ -39,6 +34,21 @@ function UpdateAlert(props: Props) {
   const closeAlert = useCallback(() => {
     actionOnClose && actionOnClose()
   }, [actionOnClose])
+
+  const startCountdown = useCallback(() => {
+    interval.current = setInterval(() => {
+      timeOut--
+      setCountDownValue(timeOut)
+      if (timeOut <= 0) {
+        clearInterval(interval.current as number)
+        if (actionControl && action) {
+          action()
+        } else {
+          closeAlert()
+        }
+      }
+    }, 1000)
+  }, [action, actionControl, closeAlert, timeOut])
 
   useEffect(() => {
     if (timeOut && show) {
@@ -60,7 +70,7 @@ function UpdateAlert(props: Props) {
       }}
     >
       {notification}{' '}
-      {timeOut && countDownValue ? (
+      {actionControl && timeOut && countDownValue ? (
         <>
           <span>Table will be reloaded in {countDownValue} seconds</span>{' '}
           <Alert.Link
@@ -76,7 +86,7 @@ function UpdateAlert(props: Props) {
       ) : (
         <></>
       )}
-      {action && (
+      {actionControl && action && (
         <Alert.Link href="#" onClick={action}>
           Reload
         </Alert.Link>
