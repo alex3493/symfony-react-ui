@@ -40,15 +40,14 @@ function UpdateAlert(props: Props) {
       timeOut--
       setCountDownValue(timeOut)
       if (timeOut <= 0) {
-        clearInterval(interval.current as number)
+        stopCountdown()
+        closeAlert()
         if (actionControl && action) {
           action()
-        } else {
-          closeAlert()
         }
       }
     }, 1000)
-  }, [action, actionControl, closeAlert, timeOut])
+  }, [action, actionControl, closeAlert, stopCountdown, timeOut])
 
   useEffect(() => {
     if (timeOut && show) {
@@ -87,7 +86,14 @@ function UpdateAlert(props: Props) {
         <></>
       )}
       {actionControl && action && (
-        <Alert.Link href="#" onClick={action}>
+        <Alert.Link
+          href="#"
+          onClick={() => {
+            closeAlert()
+            stopCountdown()
+            action()
+          }}
+        >
           Reload
         </Alert.Link>
       )}
