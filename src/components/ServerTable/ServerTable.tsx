@@ -117,7 +117,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
       case 'init':
         return { ...state, items: action.payload }
       case 'create':
-        console.log('***** Item created!', action.payload)
+        console.log('***** Item created!', mapper(action.payload))
         return {
           ...state,
           notification: notification(action.type, action.payload),
@@ -126,7 +126,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
       case 'update':
       case 'soft_delete':
       case 'restore':
-        console.log('***** Item updated!', action.payload)
+        console.log('***** Item updated!', mapper(action.payload))
         index = state.items.findIndex((i: T) => i.id === action.payload.id)
         if (index >= 0) {
           const updated = [...state.items]
@@ -139,7 +139,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         }
         break
       case 'force_delete':
-        console.log('***** Item deleted!', action.payload)
+        console.log('***** Item deleted!', mapper(action.payload))
         return {
           ...state,
           notification: notification(action.type, action.payload),
