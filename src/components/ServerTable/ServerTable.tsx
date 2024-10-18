@@ -59,6 +59,7 @@ type State<T> = {
   items: T[]
   notification?: string | undefined
   actionControl?: boolean | undefined
+  highlightedRows: HighlightedRow[]
 }
 
 type StateUpdateAction<T> =
@@ -73,6 +74,11 @@ type StateUpdateAction<T> =
   | { type: 'restore'; payload: T; actionControl?: boolean }
   | { type: 'force_delete'; payload: T; actionControl?: boolean }
   | { type: 'clear_notification' }
+
+type HighlightedRow = {
+  itemId: string | number
+  highlightType: 'added' | 'updated' | 'deleted'
+}
 
 function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   const {
@@ -89,6 +95,34 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   } = config
 
   const [dataLoaded, setDataLoaded] = useState(false)
+
+  const setHighlightedRow = useCallback(
+    (
+      highlightedRows: HighlightedRow[],
+      newHighlightedItem: {
+        item: T
+        highlightType: 'added' | 'updated' | 'deleted'
+      }
+    ) => {
+      const existingIndex = highlightedRows.findIndex(
+        (i) => i.itemId === newHighlightedItem.item.id
+      )
+      if (existingIndex >= 0) {
+        highlightedRows.splice(existingIndex, 1, {
+          itemId: newHighlightedItem.item.id,
+          highlightType: newHighlightedItem.highlightType
+        })
+      } else {
+        highlightedRows.push({
+          itemId: newHighlightedItem.item.id,
+          highlightType: newHighlightedItem.highlightType
+        })
+      }
+
+      return highlightedRows
+    },
+    []
+  )
 
   const stateReducer = (
     state: State<T>,
@@ -121,7 +155,11 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         return {
           ...state,
           notification: notification(action.type, action.payload),
-          actionControl: action.actionControl
+          actionControl: action.actionControl,
+          highlightedRows: setHighlightedRow([...state.highlightedRows], {
+            item: action.payload,
+            highlightType: 'added'
+          })
         }
       case 'update':
       case 'soft_delete':
@@ -132,9 +170,15 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
           const updated = [...state.items]
           updated.splice(index, 1, mapper(action.payload))
           return {
+            ...state,
             items: updated,
             notification: notification(action.type, action.payload),
-            actionControl: action.actionControl
+            actionControl: action.actionControl,
+            highlightedRows: setHighlightedRow([...state.highlightedRows], {
+              item: action.payload,
+              highlightType:
+                action.type === 'soft_delete' ? 'deleted' : 'updated'
+            })
           }
         }
         break
@@ -143,11 +187,15 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         return {
           ...state,
           notification: notification(action.type, action.payload),
-          actionControl: action.actionControl
+          actionControl: action.actionControl,
+          highlightedRows: setHighlightedRow([...state.highlightedRows], {
+            item: action.payload,
+            highlightType: 'deleted'
+          })
         }
       case 'clear_notification':
         console.log('***** Clear notification')
-        return { ...state, notification: undefined }
+        return { ...state, notification: undefined, highlightedRows: [] }
       default:
         console.log('ERROR :: Unknown action in list update message!')
         return state
@@ -158,8 +206,30 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
 
   const [state, dispatch] = useReducer(stateReducer, {
     items: [],
-    notification: undefined
+    notification: undefined,
+    highlightedRows: []
   })
+
+  const getRowHighlightStyle = useCallback(
+    (index: number): object => {
+      const item = state.items[index]
+
+      const highlight = state.highlightedRows?.find((r) => r.itemId === item.id)
+      if (highlight) {
+        if (highlight.highlightType === 'added') {
+          return { border: '3px solid green' }
+        }
+        if (highlight.highlightType === 'updated') {
+          return { border: '3px solid blue' }
+        }
+        if (highlight.highlightType === 'deleted') {
+          return { opacity: 0.5 }
+        }
+      }
+      return {}
+    },
+    [state.highlightedRows, state.items]
+  )
 
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -440,14 +510,15 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         </thead>
         <tbody>
           {state.items?.length > 0 ? (
-            state.items.map((item: T) => (
+            state.items.map((item: T, index: number) => (
               <tr
                 key={item.id}
-                style={
-                  'deleted_at' in item && item.deleted_at
-                    ? { opacity: 0.5 }
-                    : { opacity: 1 }
-                }
+                // style={
+                //   'deleted_at' in item && item.deleted_at
+                //     ? { opacity: 0.5 }
+                //     : { opacity: 1 }
+                // }
+                style={getRowHighlightStyle(index)}
               >
                 {columns.map((column: ColumnConfig) => (
                   <td key={column.key}>
