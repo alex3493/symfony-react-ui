@@ -61,7 +61,7 @@ type State<T> = {
   actionControl?: boolean | undefined
 }
 
-type ItemsUpdateAction<T> =
+type StateUpdateAction<T> =
   | { type: 'init'; payload: T[] }
   | { type: 'create'; payload: T; actionControl?: boolean }
   | {
@@ -90,9 +90,9 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
 
   const [dataLoaded, setDataLoaded] = useState(false)
 
-  const itemsReducer = (
+  const stateReducer = (
     state: State<T>,
-    action: ItemsUpdateAction<T>
+    action: StateUpdateAction<T>
   ): State<T> => {
     const notification = (
       action: 'create' | 'update' | 'soft_delete' | 'restore' | 'force_delete',
@@ -156,7 +156,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     return state
   }
 
-  const [state, dispatch] = useReducer(itemsReducer, {
+  const [state, dispatch] = useReducer(stateReducer, {
     items: [],
     notification: undefined
   })

@@ -69,15 +69,13 @@ function UpdateAlert(props: Props) {
       }}
     >
       {notification}{' '}
-      {actionControl && timeOut && countDownValue ? (
+      {actionControl && countDownValue && (
         <>
           <span>Table will be reloaded in {countDownValue} sec.</span>{' '}
           <Alert.Link href="#" onClick={stopCountdown}>
             Cancel
           </Alert.Link>{' '}
         </>
-      ) : (
-        <></>
       )}
       {actionControl && action && (
         <Alert.Link
