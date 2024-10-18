@@ -156,7 +156,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     return state
   }
 
-  const [items, dispatch] = useReducer(itemsReducer, {
+  const [state, dispatch] = useReducer(itemsReducer, {
     items: [],
     notification: undefined
   })
@@ -410,11 +410,11 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     <div>
       <SearchBox onInput={onSearchQueryChange} />
       <UpdateAlert
-        show={items.notification !== undefined}
+        show={state.notification !== undefined}
         dismissible={true}
-        notification={items.notification || ''}
+        notification={state.notification || ''}
         action={refreshTableCallback}
-        actionControl={items.actionControl}
+        actionControl={state.actionControl}
         timeOut={10}
         actionOnClose={() => dispatch({ type: 'clear_notification' })}
       />
@@ -439,8 +439,8 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
           </tr>
         </thead>
         <tbody>
-          {items.items?.length > 0 ? (
-            items.items.map((item: T) => (
+          {state.items?.length > 0 ? (
+            state.items.map((item: T) => (
               <tr
                 key={item.id}
                 style={

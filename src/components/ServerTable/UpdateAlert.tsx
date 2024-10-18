@@ -24,10 +24,10 @@ function UpdateAlert(props: Props) {
   let timeOut = props.timeOut === undefined ? 10 : props.timeOut
   const [countDownValue, setCountDownValue] = useState<number>()
 
-  const interval = useRef<unknown>(undefined)
+  const interval = useRef<NodeJS.Timeout | undefined>(undefined)
 
   const stopCountdown = useCallback(() => {
-    clearInterval(interval.current as number)
+    clearInterval(interval.current)
     setCountDownValue(undefined)
   }, [])
 
@@ -71,14 +71,8 @@ function UpdateAlert(props: Props) {
       {notification}{' '}
       {actionControl && timeOut && countDownValue ? (
         <>
-          <span>Table will be reloaded in {countDownValue} seconds</span>{' '}
-          <Alert.Link
-            href="#"
-            onClick={() => {
-              stopCountdown()
-              setCountDownValue(undefined)
-            }}
-          >
+          <span>Table will be reloaded in {countDownValue} sec.</span>{' '}
+          <Alert.Link href="#" onClick={stopCountdown}>
             Cancel
           </Alert.Link>{' '}
         </>
