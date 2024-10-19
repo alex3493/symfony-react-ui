@@ -22,12 +22,25 @@ function UserList() {
   // TODO: just testing render performance.
   console.log('User list rendered')
 
-  const columns: ColumnConfig[] = [
+  const columns: ColumnConfig<UserModel>[] = [
     {
       key: 'display_name',
       label: 'Name',
       sortable: true,
-      sortKey: 'name'
+      sortKey: 'name',
+      render: (value: unknown, item: UserModel | undefined) => {
+        const name = item?.display_name
+        if (item?.role === 'ROLE_ADMIN') {
+          return (
+            <>
+              <strong>{name}</strong>
+              <br />
+              <em>Administrator</em>
+            </>
+          )
+        }
+        return name || ''
+      }
     },
     {
       key: 'email',
