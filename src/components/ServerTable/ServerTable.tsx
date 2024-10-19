@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useState } from 'react'
+import { ReactNode, useCallback, useEffect, useReducer, useState } from 'react'
 import { api } from '@/services'
 import Table from 'react-bootstrap/Table'
 import SortableHeader from './SortableHeader'
@@ -11,12 +11,12 @@ import { AxiosError } from 'axios'
 import UpdateAlert from '@/components/ServerTable/UpdateAlert'
 import { notify } from '@/utils'
 
-export type ColumnConfig = {
+export type ColumnConfig<T> = {
   key: string
   label: string
   sortable: boolean
   sortKey?: string
-  render?: (value: unknown) => string
+  render?: (value: unknown, item?: T) => string | ReactNode
 }
 
 export interface RowAction<T> {
@@ -30,7 +30,7 @@ export interface RowAction<T> {
 
 interface TableConfig<T> {
   mapper: (data: T) => T
-  columns: ColumnConfig[]
+  columns: ColumnConfig<T>[]
   dataUrl: string
   defaultSortBy: string
   defaultSortDesc: boolean
@@ -289,6 +289,13 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
       const response = await api.get(dataUrl, {
         params: pagination
       })
+      if (!response?.data?.items.length && pagination.page > 1) {
+        console.log(
+          'Now rows found and we are not on the first page - get previous page results'
+        )
+        // When we update pagination we automatically repeat list request.
+        setPagination({ ...pagination, page: pagination.page - 1 })
+      }
       console.log('Load items API response', response)
       const responseItems = (response?.data?.items || []).map((data: T) => {
         return mapper(data)
@@ -455,7 +462,9 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   }
 
   const actionControl = (action: RowAction<T>, item: T) => {
-    const disabled = actionDisabled(action.route, item.id.toString())
+    const disabled =
+      // Disable all actions while table data is loading.
+      !dataLoaded || actionDisabled(action.route, item.id.toString())
     if (action.icon) {
       if (disabled) {
         return <i className={'bi ' + action.icon} />
@@ -527,10 +536,13 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
           {state.items?.length > 0 ? (
             state.items.map((item: T, index: number) => (
               <tr key={item.id} style={getRowHighlightStyle(index)}>
-                {columns.map((column: ColumnConfig) => (
+                {columns.map((column: ColumnConfig<T>) => (
                   <td key={column.key}>
                     {column.render
-                      ? column.render(item[column.key as keyof typeof item])
+                      ? column.render(
+                          item[column.key as keyof typeof item],
+                          item
+                        )
                       : renderFallback(item[column.key as keyof typeof item])}
                   </td>
                 ))}
