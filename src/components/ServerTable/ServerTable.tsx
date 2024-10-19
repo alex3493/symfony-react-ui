@@ -77,7 +77,7 @@ type StateUpdateAction<T> =
 
 type HighlightedRow = {
   itemId: string | number
-  highlightType: 'added' | 'updated' | 'deleted'
+  highlightType: 'added' | 'updated' | 'deleted' | 'removed'
 }
 
 function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
@@ -101,7 +101,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
       highlightedRows: HighlightedRow[],
       newHighlightedItem: {
         item: T
-        highlightType: 'added' | 'updated' | 'deleted'
+        highlightType: 'added' | 'updated' | 'deleted' | 'removed'
       }
     ) => {
       const existingIndex = highlightedRows.findIndex(
@@ -190,7 +190,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
           actionControl: action.actionControl,
           highlightedRows: setHighlightedRow([...state.highlightedRows], {
             item: action.payload,
-            highlightType: 'deleted'
+            highlightType: 'removed'
           })
         }
       case 'clear_notification':
@@ -225,8 +225,23 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         if (highlight.highlightType === 'deleted') {
           return { opacity: 0.5 }
         }
+        if (highlight.highlightType === 'removed') {
+          return { opacity: 0.5, border: '3px solid red' }
+        }
+      }
+      if ('deleted_at' in item && item.deleted_at) {
+        return { opacity: 0.5 }
       }
       return {}
+    },
+    [state.highlightedRows, state.items]
+  )
+
+  const isRowRemoved = useCallback(
+    (index: number): boolean => {
+      const item = state.items[index]
+      const highlight = state.highlightedRows?.find((r) => r.itemId === item.id)
+      return !!highlight && highlight?.highlightType === 'removed'
     },
     [state.highlightedRows, state.items]
   )
@@ -511,15 +526,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
         <tbody>
           {state.items?.length > 0 ? (
             state.items.map((item: T, index: number) => (
-              <tr
-                key={item.id}
-                // style={
-                //   'deleted_at' in item && item.deleted_at
-                //     ? { opacity: 0.5 }
-                //     : { opacity: 1 }
-                // }
-                style={getRowHighlightStyle(index)}
-              >
+              <tr key={item.id} style={getRowHighlightStyle(index)}>
                 {columns.map((column: ColumnConfig) => (
                   <td key={column.key}>
                     {column.render
@@ -528,16 +535,17 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
                   </td>
                 ))}
                 <td>
-                  {rowActions.map((action: RowAction<T>) => (
-                    <CanAccess
-                      key={action.key}
-                      entity={item}
-                      roles={user?.roles}
-                      permissions={action.permissions}
-                    >
-                      {actionControl(action, item)}{' '}
-                    </CanAccess>
-                  ))}
+                  {!isRowRemoved(index) &&
+                    rowActions.map((action: RowAction<T>) => (
+                      <CanAccess
+                        key={action.key}
+                        entity={item}
+                        roles={user?.roles}
+                        permissions={action.permissions}
+                      >
+                        {actionControl(action, item)}{' '}
+                      </CanAccess>
+                    ))}
                 </td>
               </tr>
             ))
