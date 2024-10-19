@@ -289,6 +289,13 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
       const response = await api.get(dataUrl, {
         params: pagination
       })
+      if (!response?.data?.items.length && pagination.page > 1) {
+        console.log(
+          'Now rows found and we are not on the first page - get previous page results'
+        )
+        // When we update pagination we automatically repeat list request.
+        setPagination({ ...pagination, page: pagination.page - 1 })
+      }
       console.log('Load items API response', response)
       const responseItems = (response?.data?.items || []).map((data: T) => {
         return mapper(data)
@@ -455,7 +462,9 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   }
 
   const actionControl = (action: RowAction<T>, item: T) => {
-    const disabled = actionDisabled(action.route, item.id.toString())
+    const disabled =
+      // Disable all actions while table data is loading.
+      !dataLoaded || actionDisabled(action.route, item.id.toString())
     if (action.icon) {
       if (disabled) {
         return <i className={'bi ' + action.icon} />
