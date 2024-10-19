@@ -39,7 +39,7 @@ function UserList() {
             </>
           )
         }
-        return name || ''
+        return value as string
       }
     },
     {
