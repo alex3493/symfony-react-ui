@@ -1,13 +1,21 @@
 import UserModel from '@/models/UserModel'
-import { Form } from 'react-bootstrap'
+import { Button, Form, Modal } from 'react-bootstrap'
 import ValidatedControl from '@/components/ValidatedControl'
-import { forwardRef, useImperativeHandle, useState } from 'react' // TODO: Add support for user create action.
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AxiosError } from 'axios'
+import { useMercureUpdates, useSession } from '@/hooks'
+import ActionButton from '@/components/ActionButton'
+import { api } from '@/services'
+import { USER_CREATE_API_ROUTE, USER_UPDATE_API_ROUTE } from '@/utils'
 
 type Props = {
   user: UserModel | undefined
+  show: boolean
+  mercureTopic: string
+  onClose: () => void
 }
 
-export type UserUpdateForm = {
+type UserUpdateForm = {
   email: string
   password?: string
   first_name: string
@@ -15,28 +23,20 @@ export type UserUpdateForm = {
   role: string
 }
 
-export interface UserFromDataHandler {
-  getFormData: () => UserUpdateForm
-}
+function EditUser(props: Props) {
+  const { user, show, mercureTopic, onClose } = props
 
-const EditUser = forwardRef(function EditUser(props: Props, ref) {
-  const { user } = props
-
-  const [values, setValues] = useState<UserUpdateForm>({
-    email: user?.email || '',
-    password: '',
-    first_name: user?.first_name || '',
-    last_name: user?.last_name || '',
-    role: user?.role || 'ROLE_USER'
-  })
-
-  useImperativeHandle(ref, () => {
+  const defaultFormData = useMemo(() => {
     return {
-      getFormData() {
-        return values
-      }
+      email: '',
+      password: '',
+      first_name: '',
+      last_name: '',
+      role: 'ROLE_USER'
     }
-  }, [values])
+  }, [])
+
+  const [values, setValues] = useState<UserUpdateForm>(defaultFormData)
 
   function handleChange(value: string, name: string) {
     setValues({
@@ -49,85 +49,202 @@ const EditUser = forwardRef(function EditUser(props: Props, ref) {
     ? 'Leave blank to keep current password'
     : 'Password'
 
+  useEffect(() => {
+    if (user) {
+      setValues({
+        email: user.email,
+        password: '',
+        first_name: user.first_name || '',
+        last_name: user?.last_name || '',
+        role: user.role || 'ROLE_USER'
+      })
+    }
+
+    return () => {
+      setValues(defaultFormData)
+    }
+  }, [defaultFormData, user])
+
+  const { mercureHubUrl } = useSession()
+  const { discoverMercureHub, addSubscription, removeSubscription } =
+    useMercureUpdates()
+
+  const subscriptionCallback = useCallback((event: MessageEvent) => {
+    console.log(
+      '***** UserItem :: Mercure message received',
+      JSON.parse(event.data)
+    )
+    // const eventData = JSON.parse(event.data)
+  }, [])
+
+  const itemTopic = useCallback(
+    () =>
+      user?.id ? mercureTopic.replace(/{.*?}/, user.id.toString()) : undefined,
+    [mercureTopic, user?.id]
+  )
+
+  useEffect(() => {
+    async function subscribe() {
+      const topic = itemTopic()
+      console.log('***** Edit user subscribing', topic)
+      if (topic) {
+        try {
+          await discoverMercureHub(mercureHubUrl)
+          await addSubscription(topic, subscriptionCallback)
+        } catch (error) {
+          return error as AxiosError
+        }
+      }
+    }
+
+    // TODO: Issue here - subscription breaks modal close on submit.
+    subscribe().catch((error) => {
+      console.log('Error subscribing to user item updates', error)
+    })
+
+    return () => {
+      const topic = itemTopic()
+      console.log('***** Edit user clean-up', topic)
+      if (topic) {
+        removeSubscription(topic)
+      }
+    }
+  }, [
+    addSubscription,
+    discoverMercureHub,
+    itemTopic,
+    mercureHubUrl,
+    mercureTopic,
+    removeSubscription,
+    subscriptionCallback,
+    user?.id
+  ])
+
+  const userSaveRoute = user
+    ? USER_UPDATE_API_ROUTE.replace('{userId}', user.id.toString())
+    : USER_CREATE_API_ROUTE
+
+  const userSaveSubmit = async () => {
+    if (user) {
+      console.log('Update user request', values, user.id)
+
+      try {
+        await api.patch(userSaveRoute, values)
+        onClose()
+      } catch (error) {
+        /**
+         * an error handler can be added here
+         */
+      }
+    } else {
+      console.log('Create user request', values)
+
+      try {
+        await api.post(USER_CREATE_API_ROUTE, values)
+        onClose()
+      } catch (error) {
+        /**
+         * an error handler can be added here
+         */
+      }
+    }
+  }
+
   return (
     <div>
-      <Form>
-        <Form.Group className="mb-3">
-          <Form.Label column="sm">Email</Form.Label>
-          <ValidatedControl
-            name="email"
-            context="User"
-            onInput={(value, name) => handleChange(value, name)}
-          >
-            <Form.Control
-              type="email"
-              value={values.email}
-              placeholder="Email"
-              autoComplete="new-password"
-            />
-          </ValidatedControl>
-        </Form.Group>
-        <Form.Group className="mb-3" controlId="first_name">
-          <Form.Label column="sm">First Name</Form.Label>
-          <ValidatedControl
-            name="first_name"
-            validationName="firstName"
-            context="User"
-            onInput={(value, name) => handleChange(value, name)}
-          >
-            <Form.Control
-              type="text"
-              value={values.first_name}
-              placeholder="First name"
-              autoComplete="given-name"
-            />
-          </ValidatedControl>
-        </Form.Group>
-        <Form.Group className="mb-3" controlId="last_name">
-          <Form.Label column="sm">Last name</Form.Label>
-          <ValidatedControl
-            name="last_name"
-            validationName="lastName"
-            context="User"
-            onInput={(value, name) => handleChange(value, name)}
-          >
-            <Form.Control
-              type="text"
-              value={values.last_name}
-              placeholder="Last name"
-              autoComplete="family-name"
-            />
-          </ValidatedControl>
-        </Form.Group>
-        <Form.Group className="mb-3" controlId="password">
-          <Form.Label column="sm">Password</Form.Label>
-          <ValidatedControl
-            name="password"
-            validationName="password"
-            context="User"
-            onInput={(value, name) => handleChange(value, name)}
-          >
-            <Form.Control
-              type="password"
-              value={values.password}
-              placeholder={passwordFieldPlaceholder}
-              autoComplete="new-password"
-            />
-          </ValidatedControl>
-        </Form.Group>
-        <Form.Group className="mb-3" controlId="role">
-          <Form.Label column="sm">Role</Form.Label>
-          <Form.Select
-            value={values.role}
-            onChange={(e) => handleChange(e.target.value, 'role')}
-          >
-            <option value="ROLE_ADMIN">Admin</option>
-            <option value="ROLE_USER">User</option>
-          </Form.Select>
-        </Form.Group>
-      </Form>
+      <Modal show={show} onHide={onClose}>
+        <Modal.Header closeButton>Edit User</Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label column="sm">Email</Form.Label>
+              <ValidatedControl
+                name="email"
+                context="User"
+                onInput={(value, name) => handleChange(value, name)}
+              >
+                <Form.Control
+                  type="email"
+                  value={values.email}
+                  placeholder="Email"
+                  autoComplete="new-password"
+                />
+              </ValidatedControl>
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="first_name">
+              <Form.Label column="sm">First Name</Form.Label>
+              <ValidatedControl
+                name="first_name"
+                validationName="firstName"
+                context="User"
+                onInput={(value, name) => handleChange(value, name)}
+              >
+                <Form.Control
+                  type="text"
+                  value={values.first_name}
+                  placeholder="First name"
+                  autoComplete="given-name"
+                />
+              </ValidatedControl>
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="last_name">
+              <Form.Label column="sm">Last name</Form.Label>
+              <ValidatedControl
+                name="last_name"
+                validationName="lastName"
+                context="User"
+                onInput={(value, name) => handleChange(value, name)}
+              >
+                <Form.Control
+                  type="text"
+                  value={values.last_name}
+                  placeholder="Last name"
+                  autoComplete="family-name"
+                />
+              </ValidatedControl>
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="password">
+              <Form.Label column="sm">Password</Form.Label>
+              <ValidatedControl
+                name="password"
+                validationName="password"
+                context="User"
+                onInput={(value, name) => handleChange(value, name)}
+              >
+                <Form.Control
+                  type="password"
+                  value={values.password}
+                  placeholder={passwordFieldPlaceholder}
+                  autoComplete="new-password"
+                />
+              </ValidatedControl>
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="role">
+              <Form.Label column="sm">Role</Form.Label>
+              <Form.Select
+                value={values.role}
+                onChange={(e) => handleChange(e.target.value, 'role')}
+              >
+                <option value="ROLE_ADMIN">Admin</option>
+                <option value="ROLE_USER">User</option>
+              </Form.Select>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <ActionButton
+            label="Save"
+            onClick={() => userSaveSubmit()}
+            route={userSaveRoute}
+            variant="primary"
+          />
+        </Modal.Footer>
+      </Modal>
     </div>
   )
-})
+}
 
 export default EditUser

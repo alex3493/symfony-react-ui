@@ -392,6 +392,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
 
   useEffect(() => {
     async function subscribe(mercureTopic: string) {
+      console.log('***** Server table subscribing', mercureTopic)
       try {
         await discoverMercureHub(mercureHubUrl)
         await addSubscription(mercureTopic, subscriptionCallback)
