@@ -6,13 +6,19 @@ import {
 } from '@/utils'
 import UserModel from '@/models/UserModel'
 import { ColumnConfig, ServerTable } from '@/components/ServerTable'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { RowAction } from '@/components/ServerTable/ServerTable'
 import { Button } from 'react-bootstrap'
 import { EditUser } from '@/pages/EditUser'
-import { useApiValidation, useSession } from '@/hooks'
+import { useApiValidation, useMercureUpdates, useSession } from '@/hooks'
 import { api } from '@/services'
 import { CanAccess } from '@/components'
+
+export type UserToEdit = {
+  user: UserModel | undefined
+  update?: UserModel | undefined
+  action?: 'update' | 'soft_delete' | 'force_delete'
+}
 
 function UserList() {
   // TODO: just testing render performance.
@@ -77,9 +83,8 @@ function UserList() {
       label: 'Edit',
       icon: 'bi-pencil',
       permissions: ['user.update'],
-      callback: function (item: UserModel): void {
-        console.log('Edit action callback', item)
-        openUserEditModal(item)
+      callback: async function (item: UserModel): Promise<void> {
+        await openUserEditModal(item)
       }
     },
     {
@@ -122,35 +127,65 @@ function UserList() {
   }, [])
 
   const [modalOpen, setModalOpen] = useState(false)
-  const [userToEdit, setUserToEdit] = useState<UserModel | undefined>(undefined)
+
+  const [userToEdit, setUserToEdit] = useState<UserToEdit>({
+    user: undefined
+  })
 
   const { removeErrors } = useApiValidation()
 
   const { user } = useSession()
 
-  // const subscriptionCallback = useCallback((event: MessageEvent) => {
-  //   console.log(
-  //     '***** UserItem :: Mercure message received',
-  //     JSON.parse(event.data)
-  //   )
-  //   // const eventData = JSON.parse(event.data)
-  // }, [])
+  const subscriptionCallback = useCallback(
+    (event: MessageEvent) => {
+      const data = JSON.parse(event.data)
+      console.log(
+        '***** User list parent :: Mercure message received',
+        data,
+        userToEdit,
+        data.item
+      )
+      // const eventData = JSON.parse(event.data)
+      if (userToEdit && userToEdit.user?.id === data.item.id) {
+        console.log('!!!!! Current open user edit form affected', data.item)
+      }
+    },
+    [userToEdit]
+  )
 
-  // const { addSubscription } = useMercureUpdates()
+  const { addEventHandler, removeEventHandler } = useMercureUpdates()
+
+  useEffect(() => {
+    async function subscribe() {
+      await addEventHandler('users::update', subscriptionCallback)
+    }
+
+    if (userToEdit) {
+      subscribe().catch((error) =>
+        console.log('Error subscribing to list updates for edit user', error)
+      )
+    } else {
+      removeEventHandler('users::update', subscriptionCallback)
+    }
+
+    return () => {
+      if (!userToEdit) {
+        removeEventHandler('users::update', subscriptionCallback)
+      }
+    }
+  }, [addEventHandler, removeEventHandler, subscriptionCallback, userToEdit])
+
   const openUserEditModal = async (item?: UserModel) => {
-    // if (item) {
-    //   const itemTopic = 'user::update::' + item.id
-    //   await addSubscription(itemTopic, subscriptionCallback)
-    // }
-    setUserToEdit(item)
+    setUserToEdit({ user: item })
     removeErrors('User')
     setModalOpen(true)
   }
 
   const closeUserEditModal = () => {
+    removeEventHandler('users::update', subscriptionCallback)
     setModalOpen(false)
     removeErrors('User')
-    setUserToEdit(undefined)
+    setUserToEdit({ user: undefined })
   }
 
   const randomVersion = () => (Math.random() + 1).toString(36).substring(7)
@@ -226,7 +261,6 @@ function UserList() {
       <EditUser
         editUser={userToEdit}
         show={modalOpen}
-        mercureTopic={'user::update::{userId}'}
         onClose={closeUserEditModal}
       />
     </div>

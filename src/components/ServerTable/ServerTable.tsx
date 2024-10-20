@@ -164,7 +164,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
       case 'update':
       case 'soft_delete':
       case 'restore':
-        console.log('***** Item updated!', mapper(action.payload))
+        // console.log('***** Item updated!', mapper(action.payload))
         index = state.items.findIndex((i: T) => i.id === action.payload.id)
         if (index >= 0) {
           const updated = [...state.items]
@@ -260,7 +260,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
   })
   const { user, mercureHubUrl } = useSession()
 
-  const { discoverMercureHub, addSubscription, removeSubscription } =
+  const { discoverMercureHub, addEventHandler, removeEventHandler } =
     useMercureUpdates()
 
   // Check activity for given endpoint and show spinner.
@@ -395,7 +395,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
       console.log('***** Server table subscribing', mercureTopic)
       try {
         await discoverMercureHub(mercureHubUrl)
-        await addSubscription(mercureTopic, subscriptionCallback)
+        await addEventHandler(mercureTopic, subscriptionCallback)
       } catch (error) {
         return error as AxiosError
       }
@@ -409,15 +409,15 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
 
     return () => {
       if (mercureTopic) {
-        removeSubscription(mercureTopic)
+        removeEventHandler(mercureTopic, subscriptionCallback)
       }
     }
   }, [
-    addSubscription,
+    addEventHandler,
     discoverMercureHub,
     mercureHubUrl,
     mercureTopic,
-    removeSubscription,
+    removeEventHandler,
     subscriptionCallback
   ])
 

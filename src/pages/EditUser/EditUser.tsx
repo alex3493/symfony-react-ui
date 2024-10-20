@@ -1,17 +1,14 @@
-import UserModel from '@/models/UserModel'
 import { Button, Form, Modal } from 'react-bootstrap'
 import ValidatedControl from '@/components/ValidatedControl'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AxiosError } from 'axios'
-import { useMercureUpdates, useSession } from '@/hooks'
+import { useEffect, useMemo, useState } from 'react'
 import ActionButton from '@/components/ActionButton'
 import { api } from '@/services'
 import { USER_CREATE_API_ROUTE, USER_UPDATE_API_ROUTE } from '@/utils'
+import { UserToEdit } from '@/pages/UserList/UserList'
 
 type Props = {
-  editUser: UserModel | undefined
+  editUser: UserToEdit
   show: boolean
-  mercureTopic: string
   onClose: () => void
 }
 
@@ -24,7 +21,7 @@ type UserUpdateForm = {
 }
 
 function EditUser(props: Props) {
-  const { editUser, show, mercureTopic, onClose } = props
+  const { editUser, show, onClose } = props
 
   const defaultFormData = useMemo(() => {
     return {
@@ -50,13 +47,13 @@ function EditUser(props: Props) {
     : 'Password'
 
   useEffect(() => {
-    if (editUser) {
+    if (editUser.user) {
       setValues({
-        email: editUser.email,
+        email: editUser.user.email,
         password: '',
-        first_name: editUser.first_name || '',
-        last_name: editUser?.last_name || '',
-        role: editUser.role || 'ROLE_USER'
+        first_name: editUser.user.first_name || '',
+        last_name: editUser.user.last_name || '',
+        role: editUser.user.role || 'ROLE_USER'
       })
     }
 
@@ -65,74 +62,17 @@ function EditUser(props: Props) {
     }
   }, [defaultFormData, editUser])
 
-  const { mercureHubUrl, user } = useSession()
-  const { discoverMercureHub, addSubscription, removeSubscription } =
-    useMercureUpdates()
-
-  const subscriptionCallback = useCallback((event: MessageEvent) => {
-    console.log(
-      '***** UserItem :: Mercure message received',
-      JSON.parse(event.data)
-    )
-    // const eventData = JSON.parse(event.data)
-  }, [])
-
-  const itemTopic = useCallback(
-    () =>
-      editUser?.id
-        ? mercureTopic.replace(/{.*?}/, editUser.id.toString())
-        : undefined,
-    [mercureTopic, editUser?.id]
-  )
-
-  useEffect(() => {
-    async function subscribe() {
-      const topic = itemTopic()
-      console.log('***** Edit user subscribing', topic)
-      if (topic) {
-        try {
-          await discoverMercureHub(mercureHubUrl)
-          await addSubscription(topic, subscriptionCallback)
-        } catch (error) {
-          return error as AxiosError
-        }
-      }
-    }
-
-    subscribe().catch((error) => {
-      console.log('Error subscribing to user item updates', error)
-    })
-
-    return () => {
-      const topic = itemTopic()
-      console.log('***** Edit user clean-up', topic)
-      // Do not remove topic for currently logged-in user.
-      if (topic && editUser?.id !== user?.id) {
-        removeSubscription(topic)
-      }
-    }
-  }, [
-    addSubscription,
-    discoverMercureHub,
-    itemTopic,
-    mercureHubUrl,
-    mercureTopic,
-    removeSubscription,
-    subscriptionCallback,
-    editUser?.id,
-    user?.id
-  ])
-
-  const userSaveRoute = editUser
-    ? USER_UPDATE_API_ROUTE.replace('{userId}', editUser.id.toString())
+  const userSaveRoute = editUser.user
+    ? USER_UPDATE_API_ROUTE.replace('{userId}', editUser.user.id.toString())
     : USER_CREATE_API_ROUTE
 
+  const modalTitle = editUser.user ? 'Edit User' : 'Create User'
+
   async function userSaveSubmit() {
-    if (editUser) {
-      console.log('Update user request', values, editUser.id)
+    if (editUser.user) {
+      console.log('Update user request', values, editUser.user.id)
 
       try {
-        // TODO: Issue here - with Mercure subscription await api.patch() never ends.
         await api.patch(userSaveRoute, values)
         onClose()
       } catch (error) {
@@ -157,7 +97,7 @@ function EditUser(props: Props) {
   return (
     <div>
       <Modal show={show} onHide={onClose}>
-        <Modal.Header closeButton>Edit User</Modal.Header>
+        <Modal.Header closeButton>{modalTitle}</Modal.Header>
         <Modal.Body>
           <Form>
             <Form.Group className="mb-3">
