@@ -25,12 +25,12 @@ function NavBar() {
       console.log('***** Mercure Event for current user', data)
       switch (data.action) {
         // Update profile action, we update current user here.
-        case 'user_update':
+        case 'update':
           updateUser(data.item)
           break
         // User account delete action, we have to sign out immediately.
-        case 'user_soft_delete':
-        case 'user_force_delete':
+        case 'soft_delete':
+        case 'force_delete':
           signOut()
           break
         default:

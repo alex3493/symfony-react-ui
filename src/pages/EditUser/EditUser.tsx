@@ -9,7 +9,7 @@ import { api } from '@/services'
 import { USER_CREATE_API_ROUTE, USER_UPDATE_API_ROUTE } from '@/utils'
 
 type Props = {
-  user: UserModel | undefined
+  editUser: UserModel | undefined
   show: boolean
   mercureTopic: string
   onClose: () => void
@@ -24,7 +24,7 @@ type UserUpdateForm = {
 }
 
 function EditUser(props: Props) {
-  const { user, show, mercureTopic, onClose } = props
+  const { editUser, show, mercureTopic, onClose } = props
 
   const defaultFormData = useMemo(() => {
     return {
@@ -45,27 +45,27 @@ function EditUser(props: Props) {
     })
   }
 
-  const passwordFieldPlaceholder = user
+  const passwordFieldPlaceholder = editUser
     ? 'Leave blank to keep current password'
     : 'Password'
 
   useEffect(() => {
-    if (user) {
+    if (editUser) {
       setValues({
-        email: user.email,
+        email: editUser.email,
         password: '',
-        first_name: user.first_name || '',
-        last_name: user?.last_name || '',
-        role: user.role || 'ROLE_USER'
+        first_name: editUser.first_name || '',
+        last_name: editUser?.last_name || '',
+        role: editUser.role || 'ROLE_USER'
       })
     }
 
     return () => {
       setValues(defaultFormData)
     }
-  }, [defaultFormData, user])
+  }, [defaultFormData, editUser])
 
-  const { mercureHubUrl } = useSession()
+  const { mercureHubUrl, user } = useSession()
   const { discoverMercureHub, addSubscription, removeSubscription } =
     useMercureUpdates()
 
@@ -79,8 +79,10 @@ function EditUser(props: Props) {
 
   const itemTopic = useCallback(
     () =>
-      user?.id ? mercureTopic.replace(/{.*?}/, user.id.toString()) : undefined,
-    [mercureTopic, user?.id]
+      editUser?.id
+        ? mercureTopic.replace(/{.*?}/, editUser.id.toString())
+        : undefined,
+    [mercureTopic, editUser?.id]
   )
 
   useEffect(() => {
@@ -97,7 +99,6 @@ function EditUser(props: Props) {
       }
     }
 
-    // TODO: Issue here - subscription breaks modal close on submit.
     subscribe().catch((error) => {
       console.log('Error subscribing to user item updates', error)
     })
@@ -105,7 +106,8 @@ function EditUser(props: Props) {
     return () => {
       const topic = itemTopic()
       console.log('***** Edit user clean-up', topic)
-      if (topic) {
+      // Do not remove topic for currently logged-in user.
+      if (topic && editUser?.id !== user?.id) {
         removeSubscription(topic)
       }
     }
@@ -117,18 +119,20 @@ function EditUser(props: Props) {
     mercureTopic,
     removeSubscription,
     subscriptionCallback,
+    editUser?.id,
     user?.id
   ])
 
-  const userSaveRoute = user
-    ? USER_UPDATE_API_ROUTE.replace('{userId}', user.id.toString())
+  const userSaveRoute = editUser
+    ? USER_UPDATE_API_ROUTE.replace('{userId}', editUser.id.toString())
     : USER_CREATE_API_ROUTE
 
-  const userSaveSubmit = async () => {
-    if (user) {
-      console.log('Update user request', values, user.id)
+  async function userSaveSubmit() {
+    if (editUser) {
+      console.log('Update user request', values, editUser.id)
 
       try {
+        // TODO: Issue here - with Mercure subscription await api.patch() never ends.
         await api.patch(userSaveRoute, values)
         onClose()
       } catch (error) {

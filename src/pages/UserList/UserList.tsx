@@ -128,7 +128,20 @@ function UserList() {
 
   const { user } = useSession()
 
-  const openUserEditModal = (item?: UserModel) => {
+  // const subscriptionCallback = useCallback((event: MessageEvent) => {
+  //   console.log(
+  //     '***** UserItem :: Mercure message received',
+  //     JSON.parse(event.data)
+  //   )
+  //   // const eventData = JSON.parse(event.data)
+  // }, [])
+
+  // const { addSubscription } = useMercureUpdates()
+  const openUserEditModal = async (item?: UserModel) => {
+    // if (item) {
+    //   const itemTopic = 'user::update::' + item.id
+    //   await addSubscription(itemTopic, subscriptionCallback)
+    // }
     setUserToEdit(item)
     removeErrors('User')
     setModalOpen(true)
@@ -211,7 +224,7 @@ function UserList() {
         refreshTableCallback={refreshTable}
       />
       <EditUser
-        user={userToEdit}
+        editUser={userToEdit}
         show={modalOpen}
         mercureTopic={'user::update::{userId}'}
         onClose={closeUserEditModal}
