@@ -13,11 +13,13 @@ import { EditUser } from '@/pages/EditUser'
 import { useApiValidation, useMercureUpdates, useSession } from '@/hooks'
 import { api } from '@/services'
 import { CanAccess } from '@/components'
+import { AxiosError } from 'axios'
 
 export type UserToEdit = {
   user: UserModel | undefined
   update?: UserModel | undefined
   action?: 'update' | 'soft_delete' | 'force_delete'
+  causer?: string
 }
 
 function UserList() {
@@ -134,7 +136,7 @@ function UserList() {
 
   const { removeErrors } = useApiValidation()
 
-  const { user } = useSession()
+  const { user, mercureHubUrl } = useSession()
 
   const subscriptionCallback = useCallback(
     (event: MessageEvent) => {
@@ -142,22 +144,38 @@ function UserList() {
       console.log(
         '***** User list parent :: Mercure message received',
         data,
-        userToEdit,
-        data.item
+        userToEdit, // TODO: We have an issue here - userToEdit is undefined!
+        data.item,
+        data.causer
       )
-      // const eventData = JSON.parse(event.data)
       if (userToEdit && userToEdit.user?.id === data.item.id) {
-        console.log('!!!!! Current open user edit form affected', data.item)
+        console.log(
+          '!!!!! Current open user edit form affected',
+          data.item,
+          data.action
+        )
+        setUserToEdit({
+          ...userToEdit,
+          action: data.action,
+          update: data.item,
+          causer: data.causer
+        })
       }
     },
     [userToEdit]
   )
 
-  const { addEventHandler, removeEventHandler } = useMercureUpdates()
+  const { addEventHandler, removeEventHandler, discoverMercureHub } =
+    useMercureUpdates()
 
   useEffect(() => {
     async function subscribe() {
-      await addEventHandler('users::update', subscriptionCallback)
+      try {
+        await discoverMercureHub(mercureHubUrl)
+        await addEventHandler('users::update', subscriptionCallback)
+      } catch (error) {
+        return error as AxiosError
+      }
     }
 
     if (userToEdit) {
@@ -173,7 +191,14 @@ function UserList() {
         removeEventHandler('users::update', subscriptionCallback)
       }
     }
-  }, [addEventHandler, removeEventHandler, subscriptionCallback, userToEdit])
+  }, [
+    addEventHandler,
+    discoverMercureHub,
+    mercureHubUrl,
+    removeEventHandler,
+    subscriptionCallback,
+    userToEdit
+  ])
 
   const openUserEditModal = async (item?: UserModel) => {
     setUserToEdit({ user: item })
@@ -186,6 +211,15 @@ function UserList() {
     setModalOpen(false)
     removeErrors('User')
     setUserToEdit({ user: undefined })
+  }
+
+  const acceptUpdate = () => {
+    setUserToEdit({
+      ...userToEdit,
+      action: undefined,
+      update: undefined,
+      causer: undefined
+    })
   }
 
   const randomVersion = () => (Math.random() + 1).toString(36).substring(7)
@@ -261,6 +295,7 @@ function UserList() {
       <EditUser
         editUser={userToEdit}
         show={modalOpen}
+        onAcceptUpdate={acceptUpdate}
         onClose={closeUserEditModal}
       />
     </div>

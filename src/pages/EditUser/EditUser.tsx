@@ -1,14 +1,17 @@
-import { Button, Form, Modal } from 'react-bootstrap'
+import { Alert, Button, Form, Modal } from 'react-bootstrap'
 import ValidatedControl from '@/components/ValidatedControl'
 import { useEffect, useMemo, useState } from 'react'
 import ActionButton from '@/components/ActionButton'
 import { api } from '@/services'
 import { USER_CREATE_API_ROUTE, USER_UPDATE_API_ROUTE } from '@/utils'
 import { UserToEdit } from '@/pages/UserList/UserList'
+import UserModel from '@/models/UserModel'
+import { useSession } from '@/hooks'
 
 type Props = {
   editUser: UserToEdit
   show: boolean
+  onAcceptUpdate: () => void
   onClose: () => void
 }
 
@@ -21,7 +24,7 @@ type UserUpdateForm = {
 }
 
 function EditUser(props: Props) {
-  const { editUser, show, onClose } = props
+  const { editUser, show, onAcceptUpdate, onClose } = props
 
   const defaultFormData = useMemo(() => {
     return {
@@ -32,6 +35,8 @@ function EditUser(props: Props) {
       role: 'ROLE_USER'
     }
   }, [])
+
+  const { user } = useSession()
 
   const [values, setValues] = useState<UserUpdateForm>(defaultFormData)
 
@@ -60,7 +65,7 @@ function EditUser(props: Props) {
     return () => {
       setValues(defaultFormData)
     }
-  }, [defaultFormData, editUser])
+  }, [defaultFormData, editUser.user])
 
   const userSaveRoute = editUser.user
     ? USER_UPDATE_API_ROUTE.replace('{userId}', editUser.user.id.toString())
@@ -94,11 +99,51 @@ function EditUser(props: Props) {
     }
   }
 
+  const updateFormData = (updatedUser: UserModel) => {
+    setValues({
+      email: updatedUser.email,
+      password: '',
+      first_name: updatedUser.first_name || '',
+      last_name: updatedUser.last_name || '',
+      role: updatedUser.role || 'ROLE_USER'
+    })
+    onAcceptUpdate()
+  }
+
+  const updateAlert = () => {
+    if (editUser.update) {
+      if (editUser.action === 'update') {
+        return (
+          <>
+            User was updated someone else{' '}
+            <Alert.Link
+              onClick={() => updateFormData(editUser.update as UserModel)}
+            >
+              Accept Update
+            </Alert.Link>
+          </>
+        )
+      }
+
+      if (editUser.action === 'soft_delete') {
+        return (
+          <>User was disabled by someone else. You cannot edit this user.</>
+        )
+      }
+      if (editUser.action === 'force_delete') {
+        return <>User was deleted by someone else. You cannot edit this user.</>
+      }
+    }
+  }
+
+  const showSaveButton = () => editUser.action === undefined
+
   return (
     <div>
       <Modal show={show} onHide={onClose}>
         <Modal.Header closeButton>{modalTitle}</Modal.Header>
         <Modal.Body>
+          <Alert show={!!editUser.action}>{updateAlert()}</Alert>
           <Form>
             <Form.Group className="mb-3">
               <Form.Label column="sm">Email</Form.Label>
@@ -179,12 +224,14 @@ function EditUser(props: Props) {
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <ActionButton
-            label="Save"
-            onClick={() => userSaveSubmit()}
-            route={userSaveRoute}
-            variant="primary"
-          />
+          {showSaveButton() && (
+            <ActionButton
+              label="Save"
+              onClick={() => userSaveSubmit()}
+              route={userSaveRoute}
+              variant="primary"
+            />
+          )}
         </Modal.Footer>
       </Modal>
     </div>
