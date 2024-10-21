@@ -115,7 +115,7 @@ function EditUser(props: Props) {
       if (editUser.action === 'update') {
         return (
           <>
-            User was updated someone else{' '}
+            User was updated by someone else{' '}
             <Alert.Link
               onClick={() => updateFormData(editUser.update as UserModel)}
             >

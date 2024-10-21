@@ -144,7 +144,7 @@ function UserList() {
       console.log(
         '***** User list parent :: Mercure message received',
         data,
-        userToEdit, // TODO: We have an issue here - userToEdit is undefined!
+        userToEdit,
         data.item,
         data.causer
       )
@@ -178,7 +178,7 @@ function UserList() {
       }
     }
 
-    if (userToEdit) {
+    if (userToEdit.user) {
       subscribe().catch((error) =>
         console.log('Error subscribing to list updates for edit user', error)
       )
@@ -187,7 +187,7 @@ function UserList() {
     }
 
     return () => {
-      if (!userToEdit) {
+      if (!userToEdit.user) {
         removeEventHandler('users::update', subscriptionCallback)
       }
     }
@@ -197,7 +197,7 @@ function UserList() {
     mercureHubUrl,
     removeEventHandler,
     subscriptionCallback,
-    userToEdit
+    userToEdit.user
   ])
 
   const openUserEditModal = async (item?: UserModel) => {
