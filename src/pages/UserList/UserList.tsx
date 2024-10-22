@@ -171,7 +171,8 @@ function UserList() {
   useEffect(() => {
     async function subscribe() {
       try {
-        await discoverMercureHub(mercureHubUrl)
+        console.log('***** User table :: subscribing to users::update')
+        // await discoverMercureHub(mercureHubUrl)
         await addEventHandler('users::update', subscriptionCallback)
       } catch (error) {
         return error as AxiosError

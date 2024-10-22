@@ -45,6 +45,7 @@ function NavBar() {
   useEffect(() => {
     async function subscribe(userId: string | number) {
       try {
+        console.log('***** NavBar :: subscribing to', `user::update::${userId}`)
         await discoverMercureHub(mercureHubUrl)
         await addSubscription(`user::update::${userId}`, subscriptionCallback)
       } catch (error) {
