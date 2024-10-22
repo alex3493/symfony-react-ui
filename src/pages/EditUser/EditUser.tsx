@@ -6,7 +6,6 @@ import { api } from '@/services'
 import { USER_CREATE_API_ROUTE, USER_UPDATE_API_ROUTE } from '@/utils'
 import { UserToEdit } from '@/pages/UserList/UserList'
 import UserModel from '@/models/UserModel'
-import { useSession } from '@/hooks'
 
 type Props = {
   editUser: UserToEdit
@@ -35,8 +34,6 @@ function EditUser(props: Props) {
       role: 'ROLE_USER'
     }
   }, [])
-
-  const { user } = useSession()
 
   const [values, setValues] = useState<UserUpdateForm>(defaultFormData)
 
