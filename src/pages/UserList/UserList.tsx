@@ -1,22 +1,26 @@
 import {
-  USER_CREATE_API_ROUTE,
   USER_DELETE_API_ROUTE,
   USER_LIST_API_ROUTE,
   USER_RESTORE_API_ROUTE,
-  USER_SOFT_DELETE_API_ROUTE,
-  USER_UPDATE_API_ROUTE
+  USER_SOFT_DELETE_API_ROUTE
 } from '@/utils'
 import UserModel from '@/models/UserModel'
 import { ColumnConfig, ServerTable } from '@/components/ServerTable'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { RowAction } from '@/components/ServerTable/ServerTable'
-import { Button, Modal } from 'react-bootstrap'
+import { Button } from 'react-bootstrap'
 import { EditUser } from '@/pages/EditUser'
-import { UserFromDataHandler } from '@/pages/EditUser/EditUser'
-import { useApiValidation, useSession } from '@/hooks'
-import ActionButton from '@/components/ActionButton'
+import { useApiValidation, useMercureUpdates, useSession } from '@/hooks'
 import { api } from '@/services'
 import { CanAccess } from '@/components'
+import { AxiosError } from 'axios'
+
+export type UserToEdit = {
+  user: UserModel | undefined
+  update?: UserModel | undefined
+  action?: 'update' | 'soft_delete' | 'force_delete'
+  causer?: string
+}
 
 function UserList() {
   // TODO: just testing render performance.
@@ -81,9 +85,8 @@ function UserList() {
       label: 'Edit',
       icon: 'bi-pencil',
       permissions: ['user.update'],
-      callback: function (item: UserModel): void {
-        console.log('Edit action callback', item)
-        openUserEditModal(item)
+      callback: async function (item: UserModel): Promise<void> {
+        await openUserEditModal(item)
       }
     },
     {
@@ -126,33 +129,102 @@ function UserList() {
   }, [])
 
   const [modalOpen, setModalOpen] = useState(false)
-  const [userToEdit, setUserToEdit] = useState<UserModel | undefined>(undefined)
+
+  const [userToEdit, setUserToEdit] = useState<UserToEdit>({
+    user: undefined
+  })
 
   const { removeErrors } = useApiValidation()
 
-  const { user } = useSession()
+  const { user, mercureHubUrl } = useSession()
 
-  const openUserEditModal = (item?: UserModel) => {
-    setUserToEdit(item)
+  const subscriptionCallback = useCallback(
+    (event: MessageEvent) => {
+      const data = JSON.parse(event.data)
+      console.log(
+        '***** User list parent :: Mercure message received',
+        data,
+        userToEdit,
+        data.item,
+        data.causer
+      )
+      if (userToEdit && userToEdit.user?.id === data.item.id) {
+        console.log(
+          '!!!!! Current open user edit form affected',
+          data.item,
+          data.action
+        )
+        setUserToEdit({
+          ...userToEdit,
+          action: data.action,
+          update: data.item,
+          causer: data.causer
+        })
+      }
+    },
+    [userToEdit]
+  )
+
+  const { addEventHandler, removeEventHandler, discoverMercureHub } =
+    useMercureUpdates()
+
+  useEffect(() => {
+    async function subscribe() {
+      try {
+        console.log('***** User table :: subscribing to users::update')
+        await discoverMercureHub(mercureHubUrl)
+        await addEventHandler('users::update', subscriptionCallback)
+      } catch (error) {
+        return error as AxiosError
+      }
+    }
+
+    if (userToEdit.user) {
+      subscribe().catch((error) =>
+        console.log('Error subscribing to list updates for edit user', error)
+      )
+    } else {
+      removeEventHandler('users::update', subscriptionCallback)
+    }
+
+    return () => {
+      if (!userToEdit.user) {
+        removeEventHandler('users::update', subscriptionCallback)
+      }
+    }
+  }, [
+    addEventHandler,
+    discoverMercureHub,
+    mercureHubUrl,
+    removeEventHandler,
+    subscriptionCallback,
+    userToEdit.user
+  ])
+
+  const openUserEditModal = async (item?: UserModel) => {
+    setUserToEdit({ user: item })
     removeErrors('User')
     setModalOpen(true)
   }
 
   const closeUserEditModal = () => {
+    removeEventHandler('users::update', subscriptionCallback)
     setModalOpen(false)
     removeErrors('User')
-    setUserToEdit(undefined)
+    setUserToEdit({ user: undefined })
   }
 
-  const ref = useRef<UserFromDataHandler>(null)
+  const acceptUpdate = () => {
+    setUserToEdit({
+      ...userToEdit,
+      action: undefined,
+      update: undefined,
+      causer: undefined
+    })
+  }
 
   const randomVersion = () => (Math.random() + 1).toString(36).substring(7)
   const [dataVersion, setDataVersion] = useState<string>(randomVersion())
-
-  const userSaveRoute = userToEdit
-    ? USER_UPDATE_API_ROUTE.replace('{userId}', userToEdit.id.toString())
-    : USER_CREATE_API_ROUTE
-  console.log('Setting user save route', userSaveRoute)
 
   const userDeleteRoute = (id: string | number) =>
     USER_DELETE_API_ROUTE.replace('{userId}', id.toString())
@@ -164,40 +236,6 @@ function UserList() {
     USER_RESTORE_API_ROUTE.replace('{userId}', id.toString())
 
   const refreshTable = () => setDataVersion(randomVersion())
-
-  const userSaveSubmit = async () => {
-    const data = ref.current?.getFormData()
-
-    if (data) {
-      if (userToEdit) {
-        console.log('Update user request', data, userToEdit.id)
-
-        try {
-          await api.patch(userSaveRoute, data)
-          closeUserEditModal()
-
-          refreshTable()
-        } catch (error) {
-          /**
-           * an error handler can be added here
-           */
-        }
-      } else {
-        console.log('Create user request', data)
-
-        try {
-          await api.post(USER_CREATE_API_ROUTE, data)
-          closeUserEditModal()
-
-          refreshTable()
-        } catch (error) {
-          /**
-           * an error handler can be added here
-           */
-        }
-      }
-    }
-  }
 
   const userDelete = async (user: UserModel) => {
     try {
@@ -255,23 +293,12 @@ function UserList() {
         version={dataVersion}
         refreshTableCallback={refreshTable}
       />
-      <Modal show={modalOpen} onHide={closeUserEditModal}>
-        <Modal.Header closeButton>Edit User</Modal.Header>
-        <Modal.Body>
-          <EditUser ref={ref} user={userToEdit} />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={closeUserEditModal}>
-            Cancel
-          </Button>
-          <ActionButton
-            label="Save"
-            onClick={() => userSaveSubmit()}
-            route={userSaveRoute}
-            variant="primary"
-          />
-        </Modal.Footer>
-      </Modal>
+      <EditUser
+        editUser={userToEdit}
+        show={modalOpen}
+        onAcceptUpdate={acceptUpdate}
+        onClose={closeUserEditModal}
+      />
     </div>
   )
 }
