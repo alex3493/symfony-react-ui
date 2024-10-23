@@ -172,7 +172,7 @@ function UserList() {
     async function subscribe() {
       try {
         console.log('***** User table :: subscribing to users::update')
-        // await discoverMercureHub(mercureHubUrl)
+        await discoverMercureHub(mercureHubUrl)
         await addEventHandler('users::update', subscriptionCallback)
       } catch (error) {
         return error as AxiosError

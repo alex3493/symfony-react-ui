@@ -394,7 +394,7 @@ function ServerTable<T extends ModelBase>(config: TableConfig<T>) {
     async function subscribe(mercureTopic: string) {
       try {
         console.log('***** Server table subscribing', mercureTopic)
-        // await discoverMercureHub(mercureHubUrl)
+        await discoverMercureHub(mercureHubUrl)
         await addEventHandler(mercureTopic, subscriptionCallback)
       } catch (error) {
         return error as AxiosError
