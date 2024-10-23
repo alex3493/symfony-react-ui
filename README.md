@@ -1,6 +1,6 @@
 # Symfony React UI
 
-### *This project is based
+### This project is based
 on [Eder Sampaio reactjs-auth-boilerplate](https://github.com/ederssouza/reactjs-auth-boilerplate).*
 
 -----
