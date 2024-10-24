@@ -44,7 +44,7 @@ function EditUser(props: Props) {
     })
   }
 
-  const passwordFieldPlaceholder = editUser
+  const passwordFieldPlaceholder = editUser.user
     ? 'Leave blank to keep current password'
     : 'Password'
 
