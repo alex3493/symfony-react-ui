@@ -102,7 +102,7 @@ function UserList() {
     },
     {
       key: 'user.soft-delete',
-      label: 'Disable',
+      label: 'Block',
       // icon: 'bi-x-circle-fill',
       permissions: ['user.soft_delete'],
       callback: function (item: UserModel): void {
@@ -113,7 +113,7 @@ function UserList() {
     },
     {
       key: 'user.restore',
-      label: 'Enable',
+      label: 'Unblock',
       // icon: 'bi-check-circle-fill',
       permissions: ['user.restore'],
       callback: function (item: UserModel): void {
