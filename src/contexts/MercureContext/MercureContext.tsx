@@ -15,6 +15,7 @@ export type MercureContextData = {
     topic: string,
     callback: (event: MessageEvent) => void
   ) => void
+  removeAllSubscriptions: () => void
 }
 
 const MercureContext = createContext({} as MercureContextData)

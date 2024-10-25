@@ -1,8 +1,7 @@
-import { ReactNode, useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { AxiosError } from 'axios'
+import { ReactNode, useCallback, useEffect, useState } from 'react'
+import { useLocation } from 'react-router-dom'
+import { AxiosError, AxiosHeaders } from 'axios'
 import { AuthContext, SignInCredentials } from '@/contexts'
-import { paths } from '@/router'
 import { api, setAuthorizationHeader } from '@/services'
 import {
   createSessionCookies,
@@ -13,8 +12,6 @@ import {
 } from '@/utils'
 import UserModel from '@/models/UserModel'
 
-import toast, { Toaster } from 'react-hot-toast'
-
 type Props = {
   children: ReactNode
 }
@@ -24,8 +21,9 @@ function AuthProvider(props: Props) {
 
   const [user, setUser] = useState<UserModel>()
   const [loadingUserData, setLoadingUserData] = useState(true)
-  const navigate = useNavigate()
   const { pathname } = useLocation()
+
+  const [mercureHubUrl, setMercureHubUrl] = useState('')
 
   const token = getToken()
   const isAuthenticated = Boolean(token)
@@ -56,6 +54,20 @@ function AuthProvider(props: Props) {
       if (response?.data) {
         const { user } = response.data
         setUser(new UserModel(user))
+
+        const headers = response.headers as AxiosHeaders
+
+        const link = headers.get(
+          'Link',
+          /<([^>]+)>;\s+rel=(?:mercure|"[^"]*mercure[^"]*")/
+        )
+
+        if (link && link.length === 2) {
+          console.log('Set Mercure Hub URL', link[1])
+          setMercureHubUrl(link[1])
+        } else {
+          console.log('ERROR :: Discovery link missing or invalid')
+        }
       }
     } catch (error) {
       console.log('Error getting user data', error)
@@ -64,35 +76,31 @@ function AuthProvider(props: Props) {
     }
   }
 
-  function signOut() {
+  const signOut = useCallback(() => {
     removeSessionCookies()
     setUser(undefined)
     setLoadingUserData(false)
-    navigate(paths.LOGIN_PATH)
-  }
+  }, [])
 
-  function updateUser(user: UserModel) {
-    setUser(new UserModel(user))
-  }
+  const updateUser = useCallback(
+    (user: UserModel) => {
+      setUser(new UserModel(user))
+    },
+    [setUser]
+  )
 
+  // TODO: Not sure we ever need this effect.
   useEffect(() => {
     if (!token) {
       removeSessionCookies()
       setUser(undefined)
       setLoadingUserData(false)
     }
-  }, [navigate, pathname, token])
 
-  const notify = (author: string, text: string) =>
-    toast(
-      <div>
-        <b>{author}</b>
-        <p>{text}</p>
-      </div>,
-      {
-        duration: 10000
-      }
-    )
+    return () => {
+      console.log('AuthProvider useEffect clean-up', pathname)
+    }
+  }, [pathname, token])
 
   useEffect(() => {
     const token = getToken()
@@ -115,20 +123,11 @@ function AuthProvider(props: Props) {
         loadingUserData,
         signIn,
         signOut,
-        updateUser
+        updateUser,
+        mercureHubUrl
       }}
     >
       {children}
-      <Toaster
-        position="bottom-right"
-        toastOptions={{
-          duration: 5000,
-          style: {
-            background: '#363636',
-            color: '#fff'
-          }
-        }}
-      />
     </AuthContext.Provider>
   )
 }

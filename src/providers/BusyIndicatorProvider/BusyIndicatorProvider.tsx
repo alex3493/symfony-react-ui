@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useReducer } from 'react'
+import { ReactNode, useEffect, useMemo, useReducer } from 'react'
 import { BusyEndpoint, BusyIndicatorContext } from '@/contexts'
 import {
   AxiosError,
@@ -6,7 +6,7 @@ import {
   AxiosResponse,
   InternalAxiosRequestConfig
 } from 'axios'
-import { api } from '@/services'
+import { UniqueInterceptors } from '@/utils'
 
 type Props = {
   children: ReactNode
@@ -40,7 +40,7 @@ function BusyIndicatorProvider(props: Props) {
     const findBusyEndpointIndex = (url: string, type: string) =>
       busyEndpoints.findIndex((e) => e.url === url && e.type === type)
 
-    console.log('Dispatched action :: busy indicator', action)
+    // console.log('Dispatched action :: busy indicator', action)
 
     if (excludedEndpoints.includes(action.endpoint.url)) {
       return updated
@@ -88,11 +88,20 @@ function BusyIndicatorProvider(props: Props) {
     }
   }
 
+  const uniqueInterceptors = useMemo(() => {
+    return new UniqueInterceptors()
+  }, [])
+
   useEffect(() => {
     const onRequest = (
       config: InternalAxiosRequestConfig<AxiosRequestConfig>
     ): InternalAxiosRequestConfig<AxiosRequestConfig> => {
       if (config.url && config.method) {
+        // console.log(
+        //   '***** BusyIndicatorProvider :: onRequest',
+        //   config.url,
+        //   config.method
+        // )
         dispatch({
           type: 'increment',
           endpoint: {
@@ -108,6 +117,11 @@ function BusyIndicatorProvider(props: Props) {
 
     const onResponse = (response: AxiosResponse): AxiosResponse => {
       if (response.config.url && response.config.method) {
+        // console.log(
+        //   '***** BusyIndicatorProvider :: onResponse',
+        //   response.config.url,
+        //   response.config.method
+        // )
         dispatch({
           type: 'decrement',
           endpoint: {
@@ -133,7 +147,7 @@ function BusyIndicatorProvider(props: Props) {
       return Promise.reject(error)
     }
 
-    const onResponseError = (error: AxiosError): Promise<AxiosError> => {
+    const onResponseError = (error: AxiosError) => {
       if (error.config?.url && error.config?.method) {
         dispatch({
           type: 'decrement',
@@ -161,21 +175,34 @@ function BusyIndicatorProvider(props: Props) {
       return Promise.reject(error)
     }
 
-    const requestInterceptor = api.interceptors.request.use(
+    // console.log('***** BusyIndicatorProvider :: effect triggered')
+
+    uniqueInterceptors.useRequestInterceptor(
+      'busy-indicator',
       onRequest,
       onRequestError
     )
 
-    const responseInterceptor = api.interceptors.response.use(
+    uniqueInterceptors.useResponseInterceptor(
+      'busy-indicator',
       onResponse,
       onResponseError
     )
 
+    // console.log(
+    //   '***** Existing interceptors',
+    //   api.interceptors.request,
+    //   api.interceptors.response
+    // )
+  }, [busyEndpoints, uniqueInterceptors])
+
+  useEffect(() => {
     return () => {
-      api.interceptors.request.eject(requestInterceptor)
-      api.interceptors.response.eject(responseInterceptor)
+      // console.log('***** BusyIndicatorProvider :: effect clean-up')
+      uniqueInterceptors.ejectRequestInterceptor('busy-indicator')
+      uniqueInterceptors.ejectResponseInterceptor('busy-indicator')
     }
-  }, [busyEndpoints])
+  }, [uniqueInterceptors])
 
   const loadingCount = () => {
     return busyEndpoints.filter((e) => e.type === 'receiving').length
@@ -200,16 +227,24 @@ function BusyIndicatorProvider(props: Props) {
   }
 
   const isEndpointBusy = (
-    endpoint: string,
+    endpoint: string | string[],
     activity?: 'all' | 'sending' | 'receiving'
   ) => {
+    // We support multiple endpoints in this check. Always convert endpoint to array.
+    if (!Array.isArray(endpoint)) {
+      endpoint = [endpoint]
+    }
     if (!activity || activity === 'all') {
       // Ignore query string when matching endpoint.
-      return busyEndpoints.some((e) => e.url.split('?')[0] === endpoint)
+      return (
+        busyEndpoints.filter((e) => endpoint.includes(e.url.split('?')[0]))
+          .length > 0
+      )
     }
-    return busyEndpoints.some(
-      // Ignore query string when matching endpoint.
-      (e) => e.url.split('?')[0] === endpoint && e.type === activity
+    return (
+      busyEndpoints.filter(
+        (e) => e.type === activity && endpoint.includes(e.url.split('?')[0])
+      ).length > 0
     )
   }
 

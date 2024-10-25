@@ -36,6 +36,8 @@ function MercureProvider(props: Props) {
         console.log('Error authorizing mercure hub', error)
         // return Promise.reject(error)
       }
+    } else {
+      console.log('Mercure hub already initialized')
     }
   }
 
@@ -71,7 +73,7 @@ function MercureProvider(props: Props) {
       // Check that the callback is not yet registered.
       if (
         !subscriptions.current[existingIndex].callbacks.find(
-          (c) => c === callback
+          (c) => c.toString() === callback.toString()
         )
       ) {
         subscriptions.current[existingIndex].callbacks.push(callback)
@@ -81,11 +83,9 @@ function MercureProvider(props: Props) {
         )
       }
 
-      console.log(
-        'Updated subscription: current subscriptions',
-        topic,
-        subscriptions.current
-      )
+      console.log('Updated subscription: current subscriptions', topic, [
+        ...subscriptions.current
+      ])
 
       return Promise.resolve(subscriptions.current[existingIndex])
     } else {
@@ -110,11 +110,9 @@ function MercureProvider(props: Props) {
           callbacks: [callback]
         })
 
-        console.log(
-          'Added subscription: current subscriptions',
-          topic,
-          subscriptions.current
-        )
+        console.log('Added subscription: current subscriptions', topic, [
+          ...subscriptions.current
+        ])
 
         return Promise.resolve({
           topic,
@@ -130,22 +128,33 @@ function MercureProvider(props: Props) {
     topic: string,
     callback: (event: MessageEvent) => void
   ) {
+    console.log('Adding event handler', topic)
+
     const existingIndex = subscriptions.current.findIndex(
       (s: Subscription) => s.topic === topic
     )
 
     if (existingIndex === -1) {
+      // console.log('***** addEventHandler :: add subscription')
       return await addSubscription(topic, callback)
     } else {
       const callbackIndex = subscriptions.current[
         existingIndex
-      ].callbacks.findIndex((c) => c === callback)
+      ].callbacks.findIndex((c) => c.toString() === callback.toString())
+
       if (callbackIndex === -1) {
+        // console.log(
+        //   '***** addEventHandler :: found subscription, adding handler'
+        // )
         subscriptions.current[existingIndex].callbacks.push(callback)
         subscriptions.current[existingIndex].eventSource.addEventListener(
           'message',
           callback as never
         )
+        // console.log(
+        //   '***** addEventHandler :: after adding callback',
+        //   subscriptions.current[existingIndex]
+        // )
       }
       return Promise.resolve({
         topic,
@@ -168,19 +177,19 @@ function MercureProvider(props: Props) {
 
       subscription.eventSource?.close()
       subscriptions.current.splice(existingIndex, 1)
-    }
 
-    console.log(
-      'Removed subscription: current subscriptions',
-      topic,
-      subscriptions.current
-    )
+      console.log('Removed subscription: current subscriptions', topic, [
+        ...subscriptions.current
+      ])
+    }
   }
 
   function removeEventHandler(
     topic: string,
     callback: (event: MessageEvent) => void
   ) {
+    console.log('Removing event handler', topic)
+
     const subscriptionIndex = subscriptions.current.findIndex(
       (s: Subscription) => s.topic === topic
     )
@@ -188,7 +197,7 @@ function MercureProvider(props: Props) {
     if (subscriptionIndex >= 0) {
       const callbackIndex = subscriptions.current[
         subscriptionIndex
-      ].callbacks.findIndex((c) => c === callback)
+      ].callbacks.findIndex((c) => c.toString() === callback.toString())
 
       if (callbackIndex >= 0) {
         subscriptions.current[
@@ -208,6 +217,13 @@ function MercureProvider(props: Props) {
     }
   }
 
+  function removeAllSubscriptions() {
+    console.log('Removing all subscriptions')
+    subscriptions.current.forEach((subscription) => {
+      removeSubscription(subscription.topic)
+    })
+  }
+
   return (
     <MercureContext.Provider
       value={{
@@ -215,7 +231,8 @@ function MercureProvider(props: Props) {
         addSubscription,
         removeSubscription,
         addEventHandler,
-        removeEventHandler
+        removeEventHandler,
+        removeAllSubscriptions
       }}
     >
       {children}

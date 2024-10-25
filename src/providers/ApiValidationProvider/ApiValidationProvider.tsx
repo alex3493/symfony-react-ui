@@ -1,11 +1,11 @@
-import { ReactNode, useCallback, useEffect, useReducer } from 'react'
+import { ReactNode, useCallback, useEffect, useMemo, useReducer } from 'react'
 import {
   ApiValidationContext,
   ApiValidationData,
   ApiValidationError
 } from '@/contexts'
-import { api } from '@/services'
 import { AxiosError, AxiosResponse } from 'axios'
+import { UniqueInterceptors } from '@/utils'
 
 type Props = {
   children: ReactNode
@@ -111,48 +111,55 @@ function ApiValidationProvider(props: Props) {
     })
   }, [])
 
-  const onResponse = (response: AxiosResponse) => {
-    return response
-  }
-
-  const onResponseError = (error: AxiosError<ApiValidationData>) => {
-    const data = error?.response?.data
-
-    if (data?.errors) {
-      console.log('Validation errors:', data?.errors)
-      // We have Api validation error.
-      mergeErrors(data)
-    } else {
-      console.log(
-        'Response error:',
-        data?.message || 'Server error',
-        data?.code
-      )
-      // Regular error response, e.g. 401 during login.
-      // For regular error responses there is no need to merge errors:
-      // we just set "Global" context error.
-      dispatch({
-        type: 'merge',
-        errors: [
-          { errors: [data?.message || 'Server error'], context: 'Global' }
-        ]
-      })
-    }
-
-    // Rethrow error after we update validation context data.
-    throw error
-  }
+  const uniqueInterceptors = useMemo(() => {
+    return new UniqueInterceptors()
+  }, [])
 
   useEffect(() => {
-    const interceptor = api.interceptors.response.use(
+    const onResponse = (response: AxiosResponse) => {
+      return response
+    }
+
+    const onResponseError = (error: AxiosError<ApiValidationData>) => {
+      const data = error?.response?.data
+
+      if (data?.errors) {
+        console.log('Validation errors:', data?.errors)
+        // We have Api validation error.
+        mergeErrors(data)
+      } else {
+        console.log(
+          'Response error:',
+          data?.message || 'Server error',
+          data?.code
+        )
+        // Regular error response, e.g. 401 during login.
+        // For regular error responses there is no need to merge errors:
+        // we just set "Global" context error.
+        dispatch({
+          type: 'merge',
+          errors: [
+            { errors: [data?.message || 'Server error'], context: 'Global' }
+          ]
+        })
+      }
+
+      // Rethrow error after we update validation context data.
+      return Promise.reject(error)
+    }
+    uniqueInterceptors.useResponseInterceptor(
+      'api-validation',
       onResponse,
       onResponseError
     )
+  }, [mergeErrors, uniqueInterceptors])
 
+  useEffect(() => {
     return () => {
-      api.interceptors.response.eject(interceptor)
+      // console.log('***** ApiValidationProvider :: effect clean-up')
+      uniqueInterceptors.ejectResponseInterceptor('api-validation')
     }
-  })
+  }, [uniqueInterceptors])
 
   return (
     <ApiValidationContext.Provider

@@ -14,6 +14,7 @@ export type AuthContextData = {
   signIn: (credentials: SignInCredentials) => Promise<void | AxiosError>
   signOut: () => void
   updateUser: (user: UserModel) => void
+  mercureHubUrl: string
 }
 
 const AuthContext = createContext({} as AuthContextData)

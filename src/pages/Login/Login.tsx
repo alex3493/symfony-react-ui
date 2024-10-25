@@ -51,7 +51,7 @@ function Login() {
         <Card.Body>
           <Form>
             <Form.Group className="mb-3" controlId="formBasicEmail">
-              <Form.Label>Email address</Form.Label>
+              <Form.Label column="sm">Email address</Form.Label>
               <Form.Control
                 type="email"
                 name="email"
@@ -62,7 +62,7 @@ function Login() {
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="formBasicPassword">
-              <Form.Label>Password</Form.Label>
+              <Form.Label column="sm">Password</Form.Label>
               <Form.Control
                 type="password"
                 name="password"

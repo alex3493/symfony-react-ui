@@ -15,14 +15,26 @@ export function validateUserPermissions(params: Params) {
   let hasAllRoles = true
 
   if (permissions?.length) {
-    const userPermissions = user?.roles.includes('ROLE_ADMIN')
-      ? ['user.list', 'user.update', 'user.delete']
-      : ['user.list']
+    const userPermissions = ['user.list']
+
+    // Admins can create users.
+    if (user?.roles.includes('ROLE_ADMIN')) {
+      userPermissions.push('user.create')
+    }
 
     if (entity instanceof UserModel) {
-      if (user?.roles.includes('ROLE_ADMIN') || user?.id === entity.id) {
-        userPermissions.push('greeting.update')
-        userPermissions.push('greeting.delete')
+      // Admins can edit active users.
+      if (user?.roles.includes('ROLE_ADMIN') && !entity.deleted_at) {
+        userPermissions.push('user.update')
+      }
+      // Admins can delete and restore users, except self.
+      if (user?.roles.includes('ROLE_ADMIN') && user?.id !== entity.id) {
+        userPermissions.push('user.delete')
+        if (entity.deleted_at) {
+          userPermissions.push('user.restore')
+        } else {
+          userPermissions.push('user.soft_delete')
+        }
       }
     }
 
