@@ -18,6 +18,21 @@ See [API project documentation](https://github.com/alex3493/symfony-api/blob/mai
 
 ## Menu structure
 
+### Users
+
+A basic user table with CRUD actions, just for testing admin user management.
+
+CRUD actions are enabled only if you are logged in as administrator (e.g. admin@example.com/password).
+
+Regular users can also view user list with pagination, sorting and text search, but cannot perform any action on users.
+
+Admin users can:
+- Create new users (both admins and regular roles).
+- Edit any user. User password is updated only if provided in edit form (force password reset). Leave password field blank to keep current user password (normal flow).
+- Block (soft-delete) users.
+- Unblock (restore) users.
+- Permanently delete (force-delete) users.
+
 ### User name
 
 Dropdown menu with the following items:
@@ -28,8 +43,17 @@ Dropdown menu with the following items:
   how to create user
   mobile app logins in Swagger Docs). Then user can log out from single device or log out from all devices (sign out).
   **Note: this action doesn't affect current user WEB account.**
-
 - Log out.
+
+## This project is powered with Symfony Mercure
+
+All user changes are automatically reflected in all browsers and browser tabs, doesn't matter if viewed by the same logged-in user or different users.
+
+For updates that do not change user count (i.e. update, soft-delete and restore), table rows are updated silently in all open windows if affected row is visible on currently displayed table page.
+
+Updates that affect user count (i.e. create and force-delete) we show an alert with timer (default 10 sec.) and table data is refreshed automatically.
+
+*This is not a perfect UI/UX solution, of course. We implement it here just for demonstration of the power of Symfony Mercure.*
 
 ## How to install
 
