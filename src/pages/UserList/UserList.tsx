@@ -5,7 +5,12 @@ import {
   USER_SOFT_DELETE_API_ROUTE
 } from '@/utils'
 import UserModel from '@/models/UserModel'
-import { ColumnConfig, ServerTable } from '@/components/ServerTable'
+import {
+  ColumnConfig,
+  ConfirmDialog,
+  ConfirmDialogProps,
+  ServerTable
+} from '@/components/ServerTable'
 import { useCallback, useEffect, useState } from 'react'
 import { RowAction } from '@/components/ServerTable/ServerTable'
 import { Button } from 'react-bootstrap'
@@ -95,8 +100,8 @@ function UserList() {
       icon: 'bi-trash',
       permissions: ['user.delete'],
       callback: function (item: UserModel): void {
-        console.log('Delete action callback', item)
-        userDelete(item).then(() => console.log('User deleted'))
+        // We are showing confirmation dialog in userDelete().
+        userDelete(item)
       },
       route: USER_DELETE_API_ROUTE
     },
@@ -107,7 +112,7 @@ function UserList() {
       permissions: ['user.soft_delete'],
       callback: function (item: UserModel): void {
         console.log('Soft-delete action callback', item)
-        userSoftDelete(item).then(() => console.log('User deleted'))
+        userSoftDelete(item).then(() => console.log('User soft-deleted'))
       },
       route: [USER_SOFT_DELETE_API_ROUTE, USER_LIST_API_ROUTE]
     },
@@ -118,7 +123,7 @@ function UserList() {
       permissions: ['user.restore'],
       callback: function (item: UserModel): void {
         console.log('Restore action callback', item)
-        userRestore(item).then(() => console.log('User deleted'))
+        userRestore(item).then(() => console.log('User restored'))
       },
       route: [USER_RESTORE_API_ROUTE, USER_LIST_API_ROUTE]
     }
@@ -237,16 +242,42 @@ function UserList() {
 
   const refreshTable = () => setDataVersion(randomVersion())
 
-  const userDelete = async (user: UserModel) => {
-    try {
-      await api.delete(userDeleteRoute(user.id))
+  const defaultConfirmDialog: ConfirmDialogProps = {
+    show: false,
+    title: undefined,
+    body: undefined,
+    onAccept: () => Promise.resolve(),
+    onCancel: () => void 0
+  }
 
-      refreshTable()
-    } catch (error) {
-      /**
-       * an error handler can be added here
-       */
-    }
+  const [confirmDialog, setConfirmDialog] =
+    useState<ConfirmDialogProps>(defaultConfirmDialog)
+
+  const userDelete = (user: UserModel) => {
+    const deleteRoute = userDeleteRoute(user.id)
+    setConfirmDialog({
+      show: true,
+      title: 'User ' + user.displayName() + ' will be permanently deleted.',
+      body: 'This action cannot be undone. Are you sure?',
+      acceptButton: 'Delete permanently',
+      cancelButton: 'Cancel',
+      acceptButtonVariant: 'danger',
+      onAccept: async () => {
+        try {
+          await api.delete(deleteRoute)
+          refreshTable()
+        } catch (error) {
+          /**
+           * an error handler can be added here
+           */
+        } finally {
+          setConfirmDialog(defaultConfirmDialog)
+        }
+      },
+      onCancel: () => {
+        setConfirmDialog(defaultConfirmDialog)
+      }
+    })
   }
 
   const userSoftDelete = async (user: UserModel) => {
@@ -298,6 +329,16 @@ function UserList() {
         show={modalOpen}
         onAcceptUpdate={acceptUpdate}
         onClose={closeUserEditModal}
+      />
+      <ConfirmDialog
+        show={confirmDialog.show}
+        title={confirmDialog.title}
+        body={confirmDialog.body}
+        acceptButton={confirmDialog.acceptButton}
+        cancelButton={confirmDialog.cancelButton}
+        acceptButtonVariant={confirmDialog.acceptButtonVariant}
+        onAccept={confirmDialog.onAccept}
+        onCancel={confirmDialog.onCancel}
       />
     </div>
   )
