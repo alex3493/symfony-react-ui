@@ -261,6 +261,7 @@ function UserList() {
       body: 'This action cannot be undone. Are you sure?',
       acceptButton: 'Delete permanently',
       cancelButton: 'Cancel',
+      acceptButtonVariant: 'danger',
       onAccept: async () => {
         try {
           await api.delete(deleteRoute)
@@ -335,6 +336,7 @@ function UserList() {
         body={confirmDialog.body}
         acceptButton={confirmDialog.acceptButton}
         cancelButton={confirmDialog.cancelButton}
+        acceptButtonVariant={confirmDialog.acceptButtonVariant}
         onAccept={confirmDialog.onAccept}
         onCancel={confirmDialog.onCancel}
       />
